@@ -4,30 +4,11 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 const CATEGORY_CARDS = [
-  {
-    title: "高爾夫服飾",
-    subtitle: "APPAREL",
-    href: "/categories/golf-apparel",
-    image: "👕",
-  },
-  {
-    title: "高爾夫球鞋",
-    subtitle: "FOOTWEAR",
-    href: "/categories/golf-footwear",
-    image: "👟",
-  },
-  {
-    title: "高爾夫配件",
-    subtitle: "ACCESSORIES",
-    href: "/categories/golf-accessories",
-    image: "🧢",
-  },
-  {
-    title: "高爾夫球具",
-    subtitle: "EQUIPMENT",
-    href: "/categories/golf-clubs",
-    image: "🏌️",
-  },
+  { title: "高爾夫球桿", subtitle: "CLUBS", href: "/categories/golf-clubs", image: "🏌️" },
+  { title: "高爾夫球", subtitle: "BALLS", href: "/categories/golf-balls", image: "⚪" },
+  { title: "球袋", subtitle: "BAGS", href: "/categories/golf-bags", image: "🎒" },
+  { title: "手套", subtitle: "GLOVES", href: "/categories/golf-gloves", image: "🧤" },
+  { title: "配件", subtitle: "ACCESSORIES", href: "/categories/golf-accessories", image: "🧢" },
 ];
 
 export function CategoryGrid() {
@@ -41,7 +22,7 @@ export function CategoryGrid() {
           hidden: {},
           visible: { transition: { staggerChildren: 0.1 } },
         }}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-3"
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
       >
         {CATEGORY_CARDS.map((cat, i) => (
           <motion.div
