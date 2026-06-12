@@ -4,6 +4,7 @@ export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:30
 
 export const CATEGORIES = [
   { name: "高爾夫球桿", slug: "golf-clubs", description: "木桿、鐵桿、推桿、挖起桿" },
+  { name: "高爾夫服飾", slug: "golf-apparel", description: "Polo衫、外套、褲子等服飾" },
   { name: "高爾夫球", slug: "golf-balls", description: "各品牌高爾夫球" },
   { name: "球袋", slug: "golf-bags", description: "站立袋、腳架袋、旅行袋" },
   { name: "手套", slug: "golf-gloves", description: "真皮手套、合成皮手套" },
