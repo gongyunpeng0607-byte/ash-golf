@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { getProducts, getCategories } from "@/lib/turso-db";
 import { formatTWD } from "@/lib/format";
-import { Plus, Pencil, Trash2, Eye } from "lucide-react";
+import { Plus, Pencil, Eye } from "lucide-react";
+import { DeleteButton } from "@/components/admin/DeleteButton";
 
 export default async function AdminProductsPage() {
   const [{ products }, categories] = await Promise.all([
@@ -32,7 +33,7 @@ export default async function AdminProductsPage() {
                   <div className="flex items-center justify-end gap-1">
                     <Link href={`/products/${p.slug}`} className="p-2 hover:bg-ash-gray-50 rounded-lg"><Eye className="h-3.5 w-3.5 text-ash-gray-400"/></Link>
                     <Link href={`/admin/products/${p.id}/edit`} className="p-2 hover:bg-ash-gray-50 rounded-lg"><Pencil className="h-3.5 w-3.5"/></Link>
-                    <form action={async()=>{"use server";const{db}=await import("@/lib/db");await db.product.delete({where:{id:p.id as string}})}}><button type="submit" className="p-2 hover:bg-red-50 rounded-lg"><Trash2 className="h-3.5 w-3.5 text-red-400"/></button></form>
+                    <DeleteButton productId={p.id} />
                   </div>
                 </td>
               </tr>
