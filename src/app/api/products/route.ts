@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProducts, getCategories } from "@/lib/turso-db";
 
+export const runtime = "nodejs";
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -21,7 +23,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     return NextResponse.json({ products, total, page, pageSize, totalPages: Math.ceil(total / pageSize), categories });
-  } catch (e: any) {
+  } catch {
     return NextResponse.json({ products: [], total: 0, page: 1, pageSize: 12, totalPages: 0, categories: [] });
   }
 }
@@ -32,32 +34,40 @@ export async function POST(request: NextRequest) {
     const tursoUrl = process.env.TURSO_DB_URL;
     const tursoToken = process.env.TURSO_AUTH_TOKEN;
 
-    if (tursoUrl && tursoToken) {
-      const id = crypto.randomUUID();
-      const now = new Date().toISOString();
-      const images = body.images || "[]";
-      const specs = body.specs || null;
-      const comparePrice = body.comparePrice != null ? body.comparePrice : "NULL";
-      const brand = body.brand || null;
-      const tags = body.tags || "[]";
-      const isFeatured = body.isFeatured ? 1 : 0;
-
-      const sql = `INSERT INTO Product(id,name,slug,description,specs,price,comparePrice,stock,isActive,isFeatured,images,categoryId,brand,tags,createdAt,updatedAt) VALUES('${id}','${(body.name||"").replace(/'/g,"''")}','${(body.slug||"").replace(/'/g,"''")}','${(body.description||"").replace(/'/g,"''")}',${specs?`'${specs.replace(/'/g,"''")}'`:"NULL"},${body.price||0},${comparePrice},${body.stock||0},${body.isActive!==false?1:0},${isFeatured},'${images.replace(/'/g,"''")}','${body.categoryId}',${brand?`'${brand.replace(/'/g,"''")}'`:"NULL"},'${tags.replace(/'/g,"''")}','${now}','${now}')`;
-
-      await fetch(`${tursoUrl}/v2/pipeline`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${tursoToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ requests: [{ type: "execute", stmt: { sql } }] }),
-      });
-
-      return NextResponse.json({ success: true, product: { id, ...body } }, { status: 201 });
+    if (!tursoUrl || !tursoToken) {
+      // 本地 Prisma
+      const { db } = await import("@/lib/db");
+      const product = await db.product.create({ data: body });
+      return NextResponse.json({ success: true, product }, { status: 201 });
     }
 
-    // Fallback to local Prisma
-    const { db } = await import("@/lib/db");
-    const product = await db.product.create({ data: body });
-    return NextResponse.json({ success: true, product }, { status: 201 });
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const esc = (s: string) => (s || "").replace(/'/g, "''");
+    const nv = (v: any) => v != null ? String(v) : "NULL";
+
+    // 先存空 images，再用 UPDATE 追加（避免 SQL 超长）
+    const images = body.images || "[]";
+
+    const sql = `INSERT INTO Product(id,name,slug,description,specs,price,comparePrice,stock,isActive,isFeatured,images,categoryId,brand,tags,createdAt,updatedAt) VALUES('${id}','${esc(body.name)}','${esc(body.slug)}','${esc(body.description)}',${body.specs?`'${esc(body.specs)}'`:"NULL"},${nv(body.price)},${body.comparePrice!=null?body.comparePrice:"NULL"},${nv(body.stock||0)},${body.isActive!==false?1:0},${body.isFeatured?1:0},'[]','${esc(body.categoryId)}',${body.brand?`'${esc(body.brand)}'`:"NULL"},'${esc(body.tags||"[]")}','${now}','${now}')`;
+
+    const stmts: Array<{ type: string; stmt: { sql: string } }> = [{ type: "execute", stmt: { sql } }];
+
+    // 图片较大时异步更新
+    if (images && images !== "[]" && images.length < 50000) {
+      stmts.push({ type: "execute", stmt: { sql: `UPDATE Product SET images = '${esc(images)}' WHERE id = '${id}'` } });
+    }
+
+    const res = await fetch(`${tursoUrl}/v2/pipeline`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${tursoToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ requests: stmts }),
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+
+    return NextResponse.json({ success: true, product: { id, ...body } }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    return NextResponse.json({ success: false, error: error.message || "建立失敗" }, { status: 500 });
   }
 }

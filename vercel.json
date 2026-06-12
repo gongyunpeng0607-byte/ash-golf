@@ -1,0 +1,21 @@
+{
+  "framework": "nextjs",
+  "regions": ["hnd1"],
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "maxDuration": 30
+    },
+    "src/app/products/**/page.tsx": {
+      "maxDuration": 30
+    },
+    "src/app/categories/**/page.tsx": {
+      "maxDuration": 30
+    },
+    "src/app/collections/**/page.tsx": {
+      "maxDuration": 30
+    },
+    "src/app/admin/**/page.tsx": {
+      "maxDuration": 30
+    }
+  }
+}

@@ -2,25 +2,33 @@
 
 const TURSO_URL = process.env.TURSO_DB_URL || "";
 const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN || "";
-
-// 本地开发时用 Prisma
 const isLocalDev = process.env.NODE_ENV !== "production" && (!TURSO_URL || !TURSO_TOKEN);
 
-async function exec(stmts: string[]) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 8000); // 8秒超时
-  try {
-    const res = await fetch(`${TURSO_URL}/v2/pipeline`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${TURSO_TOKEN}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ requests: stmts.map((sql: string) => ({ type: "execute", stmt: { sql } })) }),
-      signal: controller.signal,
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return (await res.json()).results;
-  } finally {
-    clearTimeout(timer);
+const MAX_RETRIES = 3;
+
+async function retryFetch(url: string, opts: RequestInit, retries = MAX_RETRIES): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch(url, { ...opts, signal: controller.signal });
+      clearTimeout(timer);
+      if (res.ok) return res;
+    } catch {
+      if (i === retries - 1) throw new Error("Turso unreachable after retries");
+      await new Promise(r => setTimeout(r, 500 * (i + 1)));
+    }
   }
+  throw new Error("Turso failed");
+}
+
+async function exec(stmts: string[]) {
+  const res = await retryFetch(`${TURSO_URL}/v2/pipeline`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${TURSO_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ requests: stmts.map((sql: string) => ({ type: "execute", stmt: { sql } })) }),
+  });
+  return (await res.json()).results;
 }
 
 async function query(sql: string): Promise<any[]> {
@@ -40,42 +48,26 @@ async function query(sql: string): Promise<any[]> {
 
 async function localQuery(sql: string): Promise<any[]> {
   const { db } = await import("./db");
-  // 简单路由：分析 SQL 意图
   if (sql.includes("count(*)") && sql.includes("Product")) {
     const c = await db.product.count({ where: { isActive: true } });
     return [{ total: c }];
   }
   if (sql.includes("SELECT * FROM Product") && sql.includes("slug")) {
-    const match = sql.match(/slug\s*=\s*'([^']+)'/);
-    if (match) {
-      const p = await db.product.findUnique({ where: { slug: match[1] }, include: { category: true } });
-      return p ? [{ ...p, categoryName: p.category?.name, categorySlug: p.category?.slug }] : [];
-    }
+    const m = sql.match(/slug\s*=\s*'([^']+)'/);
+    if (m) { const p = await db.product.findUnique({ where: { slug: m[1] }, include: { category: true } }); return p ? [{ ...p, categoryName: p.category?.name, categorySlug: p.category?.slug }] : []; }
   }
   if (sql.includes("SELECT * FROM Product") && sql.includes("id =")) {
-    const match = sql.match(/id\s*=\s*'([^']+)'/);
-    if (match) {
-      const p = await db.product.findUnique({ where: { id: match[1] } });
-      return p ? [p] : [];
-    }
+    const m = sql.match(/id\s*=\s*'([^']+)'/);
+    if (m) { const p = await db.product.findUnique({ where: { id: m[1] } }); return p ? [p] : []; }
   }
   if (sql.includes("SELECT * FROM Product WHERE")) {
-    const products = await db.product.findMany({
-      where: { isActive: true },
-      orderBy: { createdAt: "desc" },
-      include: { category: true },
-    });
+    const products = await db.product.findMany({ where: { isActive: true }, orderBy: { createdAt: "desc" }, include: { category: true } });
     return products.map(p => ({ ...p, categoryName: p.category?.name, categorySlug: p.category?.slug }));
   }
-  if (sql.includes("SELECT * FROM Category ORDER BY")) {
-    return db.category.findMany();
-  }
+  if (sql.includes("SELECT * FROM Category ORDER BY")) return db.category.findMany();
   if (sql.includes("SELECT * FROM Category WHERE slug")) {
-    const match = sql.match(/slug\s*=\s*'([^']+)'/);
-    if (match) {
-      const c = await db.category.findUnique({ where: { slug: match[1] } });
-      return c ? [c] : [];
-    }
+    const m = sql.match(/slug\s*=\s*'([^']+)'/);
+    if (m) { const c = await db.category.findUnique({ where: { slug: m[1] } }); return c ? [c] : []; }
   }
   if (sql.includes('SELECT * FROM "Order"')) {
     const orders = await db.order.findMany({ orderBy: { createdAt: "desc" }, include: { items: { include: { product: true } } } });
@@ -99,7 +91,7 @@ export async function getProducts(opts: { where?: string; orderBy?: string; skip
 }
 
 export async function getProductBySlug(slug: string): Promise<any> {
-  const rows = await safeQuery(`SELECT p.*, c.name as categoryName, c.slug as categorySlug FROM Product p LEFT JOIN Category c ON p.categoryId = c.id WHERE p.slug = '${slug.replace(/'/g, "''")}'`);
+  const rows = await safeQuery(`SELECT p.*, c.name as categoryName, c.slug as categorySlug FROM Product p LEFT JOIN Category c ON p.categoryId = c.id WHERE p.slug = '${slug.replace(/'/g,"''")}'`);
   if (!rows[0]) return null;
   return { ...rows[0], category: { name: rows[0].categoryName, slug: rows[0].categorySlug } };
 }
@@ -115,7 +107,7 @@ export async function getCategories(): Promise<any[]> {
 }
 
 export async function getCategoryBySlug(slug: string): Promise<any> {
-  const rows = await safeQuery(`SELECT * FROM Category WHERE slug = '${slug.replace(/'/g, "''")}'`);
+  const rows = await safeQuery(`SELECT * FROM Category WHERE slug = '${slug.replace(/'/g,"''")}'`);
   if (!rows[0]) return null;
   const cat = rows[0];
   const p = await getProducts({ where: `isActive = 1 AND categoryId = '${cat.id}'`, orderBy: "createdAt DESC", take: 50 });
