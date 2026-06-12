@@ -17,6 +17,7 @@ export default function CheckoutPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [lineId, setLineId] = useState("");
   const [note, setNote] = useState("");
 
   const total = subtotal() + (subtotal() >= 3000 ? 0 : 100);
@@ -51,7 +52,7 @@ export default function CheckoutPage() {
           shippingAddress: address,
           shippingMethod: "home",
           paymentMethod: "cod",
-          note,
+          note: lineId ? `LINE: ${lineId}${note ? ` | ${note}` : ""}` : note,
           items: items.map(i => ({ productId: i.productId, quantity: i.quantity, price: i.price })),
           totalAmount: total,
           shippingFee: subtotal() >= 3000 ? 0 : 100,
@@ -93,6 +94,10 @@ export default function CheckoutPage() {
         <div>
           <label className="block text-xs text-ash-gray-500 mb-1.5">手機號碼 *</label>
           <input required className="w-full border border-ash-gray-200 px-4 py-3 text-sm outline-none focus:border-ash-black transition-colors" value={phone} onChange={e => setPhone(e.target.value)} placeholder="09xxxxxxxx" />
+        </div>
+        <div>
+          <label className="block text-xs text-ash-gray-500 mb-1.5">LINE ID（選填，方便客服聯繫您）</label>
+          <input className="w-full border border-ash-gray-200 px-4 py-3 text-sm outline-none focus:border-ash-black transition-colors" value={lineId} onChange={e => setLineId(e.target.value)} placeholder="請輸入您的 LINE ID" />
         </div>
         <div>
           <label className="block text-xs text-ash-gray-500 mb-1.5">配送地址 *</label>
