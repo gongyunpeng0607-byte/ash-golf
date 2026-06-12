@@ -30,7 +30,9 @@ export function ProductForm({ categories, product }: ProductFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setError(""); setSaving(true);
-    const data = { ...form, price: parseInt(form.price) || 0, comparePrice: form.comparePrice ? parseInt(form.comparePrice) : null, stock: parseInt(form.stock) || 0 };
+    // 图片太大不进 SQL，去掉 images
+    const { images, ...rest } = form;
+    const data = { ...rest, price: parseInt(form.price) || 0, comparePrice: form.comparePrice ? parseInt(form.comparePrice) : null, stock: parseInt(form.stock) || 0, images: "[]" };
     try {
       const url = isEdit ? `/api/products/${product!.id}` : "/api/products";
       const res = await fetch(url, { method: isEdit ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
