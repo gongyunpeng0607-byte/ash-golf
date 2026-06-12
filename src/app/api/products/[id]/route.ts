@@ -1,7 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProductById } from "@/lib/turso-db";
 
-export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+async function tursoExecMulti(stmts: string[]): Promise<boolean> {
+  const url = process.env.TURSO_DB_URL;
+  const token = process.env.TURSO_AUTH_TOKEN;
+  if (!url || !token) return false;
+  const res = await fetch(`${url}/v2/pipeline`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ requests: stmts.map(sql => ({ type: "execute", stmt: { sql } })) }),
+  });
+  if (!res.ok) return false;
+  const data = await res.json();
+  return (data.results || []).every((r: any) => r.type === "ok");
+}
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -14,78 +28,52 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params;
   try {
     const body = await request.json();
-    const tursoUrl = process.env.TURSO_DB_URL;
-    const tursoToken = process.env.TURSO_AUTH_TOKEN;
+    const url = process.env.TURSO_DB_URL;
+    const token = process.env.TURSO_AUTH_TOKEN;
 
-    if (!tursoUrl || !tursoToken) {
+    if (!url || !token) {
       const { db } = await import("@/lib/db");
       const product = await db.product.update({ where: { id }, data: body });
       return NextResponse.json({ success: true, product });
     }
 
-    const esc = (s: string) => (s || "").replace(/'/g, "''");
+    const esc = (s: string) => String(s||"").replace(/'/g,"''");
     const sets: string[] = [];
-
-    const fields: Record<string, string> = {
-      name: `'${esc(body.name)}'`,
-      slug: `'${esc(body.slug)}'`,
-      description: `'${esc(body.description)}'`,
-      price: String(Number(body.price) || 0),
-      comparePrice: body.comparePrice != null ? String(Number(body.comparePrice)) : "NULL",
-      stock: String(Number(body.stock) || 0),
-      isActive: body.isActive ? "1" : "0",
-      isFeatured: body.isFeatured ? "1" : "0",
-      categoryId: `'${esc(body.categoryId)}'`,
-      brand: body.brand ? `'${esc(body.brand)}'` : "NULL",
-      specs: body.specs ? `'${esc(body.specs)}'` : "NULL",
-      tags: `'${esc(body.tags || "[]")}'`,
+    const map: Record<string,string> = {
+      name: `'${esc(body.name)}'`, slug: `'${esc(body.slug)}'`, description: `'${esc(body.description)}'`,
+      price: String(Number(body.price)||0), stock: String(Number(body.stock)||0),
+      isActive: body.isActive!==false?"1":"0", isFeatured: body.isFeatured?"1":"0",
+      categoryId: `'${esc(body.categoryId)}'`, brand: body.brand?`'${esc(body.brand)}'`:"NULL",
+      specs: body.specs?`'${esc(body.specs)}'`:"NULL", tags: `'${esc(body.tags||"[]")}'`,
     };
+    if (body.comparePrice != null) map.comparePrice = String(Number(body.comparePrice));
 
-    for (const [key, val] of Object.entries(fields)) {
-      if (body[key] !== undefined) sets.push(`${key} = ${val}`);
+    for (const [k,v] of Object.entries(map)) {
+      if (body[k] !== undefined) sets.push(`${k}=${v}`);
     }
-    sets.push(`updatedAt = '${new Date().toISOString()}'`);
+    sets.push(`updatedAt='${new Date().toISOString().replace("T"," ").slice(0,19)}'`);
 
-    const stmts: Array<{ type: string; stmt: { sql: string } }> = [
-      { type: "execute", stmt: { sql: `UPDATE Product SET ${sets.join(", ")} WHERE id = '${id}'` } },
-    ];
-
-    // 图片分开更新
-    if (body.images !== undefined && body.images !== "[]" && body.images.length < 50000) {
-      stmts.push({ type: "execute", stmt: { sql: `UPDATE Product SET images = '${esc(body.images)}' WHERE id = '${id}'` } });
-    }
-
-    const res = await fetch(`${tursoUrl}/v2/pipeline`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${tursoToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ requests: stmts }),
-    });
-
-    if (!res.ok) throw new Error(await res.text());
-    return NextResponse.json({ success: true, product: { id, ...body } });
+    const ok = await tursoExecMulti([`UPDATE Product SET ${sets.join(",")} WHERE id='${id}'`]);
+    if (!ok) throw new Error("更新失敗");
+    return NextResponse.json({ success: true });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message || "更新失敗" }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message||"更新失敗" }, { status: 500 });
   }
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
-    const tursoUrl = process.env.TURSO_DB_URL;
-    const tursoToken = process.env.TURSO_AUTH_TOKEN;
+    const url = process.env.TURSO_DB_URL;
+    const token = process.env.TURSO_AUTH_TOKEN;
 
-    if (tursoUrl && tursoToken) {
-      const stmts = [
-        { type: "execute", stmt: { sql: `DELETE FROM OrderItem WHERE productId = '${id}'` } },
-        { type: "execute", stmt: { sql: `DELETE FROM CartItem WHERE productId = '${id}'` } },
-        { type: "execute", stmt: { sql: `DELETE FROM Product WHERE id = '${id}'` } },
-      ];
-
-      await fetch(`${tursoUrl}/v2/pipeline`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${tursoToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ requests: stmts }),
-      });
+    if (url && token) {
+      const ok = await tursoExecMulti([
+        `DELETE FROM OrderItem WHERE productId='${id}'`,
+        `DELETE FROM CartItem WHERE productId='${id}'`,
+        `DELETE FROM Product WHERE id='${id}'`,
+      ]);
+      if (!ok) throw new Error("刪除失敗");
       return NextResponse.json({ success: true });
     }
 
@@ -93,6 +81,6 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     await db.product.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message || "刪除失敗" }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message||"刪除失敗" }, { status: 500 });
   }
 }
