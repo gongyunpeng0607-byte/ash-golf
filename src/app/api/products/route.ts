@@ -4,12 +4,10 @@ import { uuid } from "@/lib/uuid";
 
 export const dynamic = "force-dynamic";
 
-// --- Turso 写入（返回详细错误）---
 async function tursoWrite(sql: string): Promise<{ ok: boolean; error?: string }> {
   const u = process.env.TURSO_DB_URL;
   const t = process.env.TURSO_AUTH_TOKEN;
   if (!u || !t) return { ok: false, error: "missing env" };
-
   try {
     const ctl = new AbortController();
     const tm = setTimeout(() => ctl.abort(), 15000);
@@ -23,7 +21,7 @@ async function tursoWrite(sql: string): Promise<{ ok: boolean; error?: string }>
     const data = await res.json();
     const r = data.results?.[0];
     if (r?.type === "ok") return { ok: true };
-    return { ok: false, error: r?.error?.message || `type=${r?.type}` };
+    return { ok: false, error: r?.error?.message || "unknown error" };
   } catch (e: any) {
     return { ok: false, error: e.message };
   }
@@ -39,7 +37,7 @@ export async function GET(request: NextRequest) {
     const q = sp.get("search") || "";
     const cid = sp.get("categoryId") || "";
     let w = "isActive = 1";
-    if (q) w += ` AND (name LIKE '%${q.replace(/'/g,"''")}%' OR description LIKE '%${q.replace(/'/g,"''")}%' OR brand LIKE '%${q.replace(/'/g,"''")}%')`;
+    if (q) w += ` AND (name LIKE '%${q.replace(/'/g, "''")}%' OR description LIKE '%${q.replace(/'/g, "''")}%' OR brand LIKE '%${q.replace(/'/g, "''")}%')`;
     if (cid) w += ` AND categoryId = '${cid}'`;
     const ob = sort === "price-asc" ? "price ASC" : sort === "price-desc" ? "price DESC" : "createdAt DESC";
     const [{ products, total }, cats] = await Promise.all([getProducts({ where: w, orderBy: ob, skip: (page - 1) * ps, take: ps }), getCategories()]);
@@ -52,45 +50,42 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // 本地回退
+    // 本地 Prisma 回退
     if (!process.env.TURSO_AUTH_TOKEN) {
-      try {
-        const { db } = await import("@/lib/db");
-        return NextResponse.json({ success: true, product: await db.product.create({ data: body }) }, { status: 201 });
-      } catch (e: any) {
-        return NextResponse.json({ success: false, error: e.message }, { status: 500 });
-      }
+      const { db } = await import("@/lib/db");
+      return NextResponse.json({ success: true, product: await db.product.create({ data: body }) }, { status: 201 });
     }
 
     const id = uuid();
     const now = new Date().toISOString().replace("T", " ").slice(0, 19);
-    const sc = (v: any) => String(v ?? "").replace(/'/g, "''");
-    const qu = (v: any) => (v != null && String(v).trim()) ? `'${sc(v)}'` : "NULL";
+    const s = (v: any) => String(v ?? "").replace(/'/g, "''");
+    const q = (v: any) => (v != null && String(v).trim()) ? `'${s(v)}'` : "NULL";
 
-    // 写死——不用复杂拼接，保证零错误
-    const name = sc(body.name || "");
-    const slug = sc(body.slug || "");
-    const desc = sc(body.description || "");
-    const specs = qu(body.specs || null);
-    const price = Math.max(0, parseInt(body.price) || 0);
-    const cp = body.comparePrice ? parseInt(body.comparePrice) : "NULL";
-    const stock = parseInt(body.stock) || 0;
-    const active = body.isActive === false ? 0 : 1;
-    const feat = body.isFeatured ? 1 : 0;
-    const catId = sc(body.categoryId || "");
-    const brand = qu(body.brand || null);
-    const tags = `'${sc(body.tags || "[]")}'`;
-
-    // 建表（幂等）
-    const tbl = `CREATE TABLE IF NOT EXISTS Product(id TEXT PRIMARY KEY NOT NULL,name TEXT NOT NULL,slug TEXT UNIQUE NOT NULL,description TEXT NOT NULL,specs TEXT,price INTEGER NOT NULL DEFAULT 0,comparePrice INTEGER,stock INTEGER DEFAULT 0,isActive INTEGER DEFAULT 1,isFeatured INTEGER DEFAULT 0,images TEXT DEFAULT '[]',categoryId TEXT NOT NULL,brand TEXT,tags TEXT DEFAULT '[]',createdAt TEXT DEFAULT (datetime('now')),updatedAt TEXT DEFAULT (datetime('now')))`;
-    await tursoWrite(tbl);
-
-    // INSERT
-    const ins = `INSERT INTO Product(id,name,slug,description,specs,price,comparePrice,stock,isActive,isFeatured,images,categoryId,brand,tags,createdAt,updatedAt) VALUES('${id}','${name}','${slug}','${desc}',${specs},${price},${cp},${stock},${active},${feat},'[]','${catId}',${brand},${tags},'${now}','${now}')`;
+    const ins = [
+      "INSERT INTO Product(id,name,slug,description,specs,price,comparePrice,stock,isActive,isFeatured,images,categoryId,brand,tags,createdAt,updatedAt)",
+      "VALUES(",
+      `'${id}',`,
+      `'${s(body.name)}',`,
+      `'${s(body.slug)}',`,
+      `'${s(body.description)}',`,
+      `${q(body.specs)},`,
+      `${Math.max(0, parseInt(body.price) || 0)},`,
+      `${body.comparePrice ? parseInt(body.comparePrice) : "NULL"},`,
+      `${parseInt(body.stock) || 0},`,
+      `${body.isActive === false ? 0 : 1},`,
+      `${body.isFeatured ? 1 : 0},`,
+      "'[]',",
+      `'${s(body.categoryId)}',`,
+      `${q(body.brand)},`,
+      `'${s(body.tags || "[]")}',`,
+      `'${now}',`,
+      `'${now}'`,
+      ")",
+    ].join(" ");
 
     const ret = await tursoWrite(ins);
     if (!ret.ok) {
-      return NextResponse.json({ success: false, error: ret.error || "寫入失敗", sql: ins.slice(0, 500) }, { status: 500 });
+      return NextResponse.json({ success: false, error: ret.error || "寫入失敗" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, product: { id, ...body } }, { status: 201 });
