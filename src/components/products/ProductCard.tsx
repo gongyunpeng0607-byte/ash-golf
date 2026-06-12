@@ -1,122 +1,76 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { Eye, ShoppingCart } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
 import { formatTWD } from "@/lib/format";
 import type { Product } from "@/types";
 
+const GOLF_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='500' viewBox='0 0 400 500'%3E%3Crect fill='%231a1a2e' width='400' height='500'/%3E%3Ctext fill='%23ffffff20' font-family='sans-serif' font-size='80' text-anchor='middle' x='200' y='260'%3E%E2%9B%B3%3C/text%3E%3C/svg%3E";
+
 export function ProductCard({ product }: { product: Product }) {
   const images = (() => { try { return JSON.parse(product.images || "[]"); } catch { return []; } })() as string[];
+  const img = images[0] || GOLF_PLACEHOLDER;
   const hasDiscount = product.comparePrice && product.comparePrice > product.price;
-  const [imgLoaded, setImgLoaded] = useState(false);
   const addItem = useCartStore(s => s.addItem);
 
   const quickAdd = (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
     if (product.stock <= 0) return;
-    addItem({ productId: product.id, name: product.name, price: product.price, image: images[0]||"", stock: product.stock, quantity: 1 });
+    addItem({ productId: product.id, name: product.name, price: product.price, image: img, stock: product.stock, quantity: 1 });
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+      viewport={{ once: true, margin: "-30px" }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
       className="group/card"
     >
       <Link href={`/products/${product.slug}`} className="block">
-        {/* Image */}
-        <div className="relative aspect-[3/4] bg-ash-gray-100 overflow-hidden mb-4">
-          {/* Skeleton */}
-          {!imgLoaded && <div className="absolute inset-0 animate-pulse bg-ash-gray-100" />}
+        {/* Image — 全宽显示，1:1.25 比例 */}
+        <div className="relative aspect-[4/5] bg-[#1a1a2e] overflow-hidden mb-3">
+          <img
+            src={img}
+            alt={product.name}
+            className="w-full h-full object-cover transition-transform duration-600 group-hover/card:scale-105"
+            loading="lazy"
+          />
 
-          {images[0] ? (
-            <img
-              src={images[0]}
-              alt={product.name}
-              onLoad={() => setImgLoaded(true)}
-              className="w-full h-full object-cover transition-all duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover/card:scale-105"
-              loading="lazy"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-6xl transition-transform duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover/card:scale-110">🏌️</div>
-          )}
-
-          {/* SALE badge */}
           {hasDiscount && (
-            <span className="absolute top-0 left-0 bg-ash-black text-white text-[9px] tracking-[0.2em] uppercase px-3 py-1.5 z-10">
-              SALE
-            </span>
+            <span className="absolute top-0 left-0 bg-white text-black text-[9px] tracking-[0.2em] uppercase px-2.5 py-1 z-10 font-bold">SALE</span>
           )}
 
-          {/* Premium hover layer */}
-          <div className="absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-all duration-500 ease-out">
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-
-            {/* Bottom actions */}
-            <div className="absolute inset-x-0 bottom-0 p-4 space-y-2">
-              <motion.div
-                initial={{ y: 16, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.05, duration: 0.3 }}
-                className="flex items-center justify-center gap-2 bg-white text-ash-black text-[11px] tracking-[0.12em] uppercase py-3 font-bold shadow-xl cursor-pointer hover:bg-ash-gray-50 transition-all duration-200 active:scale-[0.98]"
-              >
-                <Eye className="h-3.5 w-3.5" /> 查看詳情
-              </motion.div>
-
-              <motion.button
-                initial={{ y: 16, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.1, duration: 0.3 }}
-                onClick={quickAdd}
-                disabled={product.stock <= 0}
-                className="flex items-center justify-center gap-2 w-full bg-white/20 backdrop-blur border border-white/30 text-white text-[10px] tracking-[0.12em] uppercase py-2.5 font-medium hover:bg-white/30 transition-all duration-200 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <ShoppingCart className="h-3 w-3" /> 快速加入購物車
-              </motion.button>
-            </div>
+          {/* Hover — 半透明遮罩 + 查看详情 */}
+          <div className="absolute inset-0 bg-black/0 group-hover/card:bg-black/40 transition-all duration-400 flex items-center justify-center opacity-0 group-hover/card:opacity-100">
+            <span className="flex items-center gap-2 bg-white text-black text-[11px] tracking-[0.1em] uppercase px-6 py-3 font-bold shadow-xl hover:bg-gray-100 transition-colors">
+              <Eye className="h-3.5 w-3.5" /> 查看詳情
+            </span>
           </div>
 
-          {/* Out of stock overlay */}
           {product.stock === 0 && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-              <span className="text-white text-xs tracking-[0.2em] uppercase font-bold bg-black/60 px-4 py-2">SOLD OUT</span>
+              <span className="text-white text-xs tracking-[0.2em] uppercase font-bold bg-black/70 px-4 py-2">SOLD OUT</span>
             </div>
           )}
         </div>
 
         {/* Info */}
-        <div className="px-0.5">
+        <div>
           {product.brand && (
-            <p className="text-[9px] tracking-[0.18em] uppercase text-ash-gray-400 mb-1.5 font-medium">
-              {product.brand}
-            </p>
+            <p className="text-[9px] tracking-[0.15em] uppercase text-gray-400 mb-1 font-medium">{product.brand}</p>
           )}
-          <h3 className="text-[13px] font-medium text-ash-black leading-[1.5] line-clamp-2 group-hover/card:text-ash-gray-600 transition-colors duration-300">
-            {product.name}
-          </h3>
-          <div className="flex items-baseline gap-2.5 mt-2.5">
+          <h3 className="text-[13px] font-medium text-black leading-snug line-clamp-2">{product.name}</h3>
+          <div className="flex items-baseline gap-2 mt-1.5">
             {hasDiscount ? (
               <>
-                <span className="text-[11px] text-ash-gray-400 line-through font-medium">
-                  {formatTWD(product.comparePrice!)}
-                </span>
-                <span className="text-[13px] font-bold text-ash-black">
-                  {formatTWD(product.price)}
-                </span>
-                <span className="text-[10px] text-red-600 font-medium ml-auto">
-                  -{Math.round((1 - product.price / product.comparePrice!) * 100)}%
-                </span>
+                <span className="text-[11px] text-gray-400 line-through">{formatTWD(product.comparePrice!)}</span>
+                <span className="text-[13px] font-bold text-black">{formatTWD(product.price)}</span>
               </>
             ) : (
-              <span className="text-[13px] font-bold text-ash-black">
-                {formatTWD(product.price)}
-              </span>
+              <span className="text-[13px] font-bold text-black">{formatTWD(product.price)}</span>
             )}
           </div>
         </div>

@@ -30,26 +30,12 @@ export function ProductForm({ categories, product }: ProductFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setError(""); setSaving(true);
-    const { images, ...rest } = form;
-    const data = { ...rest, price: parseInt(form.price) || 0, comparePrice: form.comparePrice ? parseInt(form.comparePrice) : null, stock: parseInt(form.stock) || 0 };
+    const data = { ...form, price: parseInt(form.price) || 0, comparePrice: form.comparePrice ? parseInt(form.comparePrice) : null, stock: parseInt(form.stock) || 0 };
     try {
       const url = isEdit ? `/api/products/${product!.id}` : "/api/products";
       const res = await fetch(url, { method: isEdit ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
       const result = await res.json();
-      if (result.success) {
-        // 第二步：更新图片
-        if (images && images !== "[]") {
-          const pid = result.product?.id || product?.id;
-          if (pid) {
-            await fetch(`/api/products/${pid}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ images }),
-            });
-          }
-        }
-        router.push("/admin/products"); router.refresh();
-      }
+      if (result.success) { router.push("/admin/products"); router.refresh(); }
       else { setError(result.error || "儲存失敗"); setSaving(false); }
     } catch { setError("網路錯誤"); setSaving(false); }
   };
