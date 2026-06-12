@@ -61,6 +61,10 @@ export async function POST(request: NextRequest) {
     const s = (v: any) => String(v ?? "").replace(/'/g, "''");
     const q = (v: any) => (v != null && String(v).trim()) ? `'${s(v)}'` : "NULL";
 
+    // 图片：小图直接存，大图后续 UPDATE
+    const images = body.images || "[]";
+    const imgField = images.length < 8000 ? `'${s(images)}'` : "'[]'";
+
     const ins = [
       "INSERT INTO Product(id,name,slug,description,specs,price,comparePrice,stock,isActive,isFeatured,images,categoryId,brand,tags,createdAt,updatedAt)",
       "VALUES(",
@@ -74,7 +78,7 @@ export async function POST(request: NextRequest) {
       `${parseInt(body.stock) || 0},`,
       `${body.isActive === false ? 0 : 1},`,
       `${body.isFeatured ? 1 : 0},`,
-      "'[]',",
+      `${imgField},`,
       `'${s(body.categoryId)}',`,
       `${q(body.brand)},`,
       `'${s(body.tags || "[]")}',`,
@@ -86,6 +90,11 @@ export async function POST(request: NextRequest) {
     const ret = await tursoWrite(ins);
     if (!ret.ok) {
       return NextResponse.json({ success: false, error: ret.error || "寫入失敗" }, { status: 500 });
+    }
+
+    // 大图片（>8KB）后续更新
+    if (images && images !== "[]" && images.length >= 8000) {
+      await tursoWrite(`UPDATE Product SET images = '${s(images)}' WHERE id = '${id}'`);
     }
 
     return NextResponse.json({ success: true, product: { id, ...body } }, { status: 201 });
