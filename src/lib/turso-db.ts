@@ -7,13 +7,20 @@ const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN || "";
 const isLocalDev = process.env.NODE_ENV !== "production" && (!TURSO_URL || !TURSO_TOKEN);
 
 async function exec(stmts: string[]) {
-  const res = await fetch(`${TURSO_URL}/v2/pipeline`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${TURSO_TOKEN}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ requests: stmts.map((sql: string) => ({ type: "execute", stmt: { sql } })) }),
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return (await res.json()).results;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000); // 8秒超时
+  try {
+    const res = await fetch(`${TURSO_URL}/v2/pipeline`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${TURSO_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ requests: stmts.map((sql: string) => ({ type: "execute", stmt: { sql } })) }),
+      signal: controller.signal,
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return (await res.json()).results;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function query(sql: string): Promise<any[]> {
