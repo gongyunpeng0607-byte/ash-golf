@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getProducts, getCategories } from "@/lib/turso-db";
+import { getProducts, getCategories, clearCache } from "@/lib/turso-db";
 import { uuid } from "@/lib/uuid";
 
 export const dynamic = "force-dynamic";
@@ -97,6 +97,7 @@ export async function POST(request: NextRequest) {
       await tursoWrite(`UPDATE Product SET images = '${s(images)}' WHERE id = '${id}'`);
     }
 
+    clearCache(); // 新建商品后清除缓存
     return NextResponse.json({ success: true, product: { id, ...body } }, { status: 201 });
   } catch (e: any) {
     return NextResponse.json({ success: false, error: e.message }, { status: 500 });

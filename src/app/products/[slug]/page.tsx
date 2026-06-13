@@ -1,5 +1,5 @@
 export const dynamic = 'force-dynamic';
-export const revalidate = 5;
+export const revalidate = 10;
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getProductBySlug } from "@/lib/turso-db";

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getProductById } from "@/lib/turso-db";
+import { getProductById, clearCache } from "@/lib/turso-db";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +84,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
+    clearCache();
     return NextResponse.json({ success: true });
   } catch (e: any) {
     return NextResponse.json({ success: false, error: e.message }, { status: 500 });
@@ -99,6 +100,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
       await tursoWrite(`DELETE FROM CartItem WHERE productId='${id}'`);
       const res = await tursoWrite(`DELETE FROM Product WHERE id='${id}'`);
       if (!res.ok) return NextResponse.json({ success: false, error: "刪除失敗" }, { status: 500 });
+      clearCache();
       return NextResponse.json({ success: true });
     }
     const { db } = await import("@/lib/db");
