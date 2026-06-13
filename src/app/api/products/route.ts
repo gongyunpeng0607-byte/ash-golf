@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     // 图片：小图直接存，大图后续 UPDATE
     const images = body.images || "[]";
-    const imgField = images.length < 8000 ? `'${s(images)}'` : "'[]'";
+    const imgField = images.length < 80000 ? `'${s(images)}'` : "'[]'";
 
     const ins = [
       "INSERT INTO Product(id,name,slug,description,specs,price,comparePrice,stock,isActive,isFeatured,images,categoryId,brand,tags,createdAt,updatedAt)",

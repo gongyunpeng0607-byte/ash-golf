@@ -1,17 +1,17 @@
 import Link from "next/link";
-import { db } from "@/lib/db";
+import { getProducts } from "@/lib/turso-db";
 import { ProductCard } from "@/components/products/ProductCard";
 import { ArrowRight } from "lucide-react";
 
 export async function FeaturedProducts() {
   try {
-    const products = await db.product.findMany({
-      where: { isActive: true, isFeatured: true },
+    const { products } = await getProducts({
+      where: "isActive = 1 AND isFeatured = 1",
+      orderBy: "createdAt DESC",
       take: 8,
-      orderBy: { createdAt: "desc" },
     });
 
-    if (products.length === 0) return null;
+    if (!products || products.length === 0) return null;
 
     return (
       <section className="max-w-[1440px] mx-auto px-6 lg:px-10 py-20">
@@ -25,7 +25,7 @@ export async function FeaturedProducts() {
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10">
-          {products.map((product) => (
+          {products.map((product: any) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
