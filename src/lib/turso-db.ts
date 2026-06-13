@@ -101,7 +101,7 @@ async function localQuery(sql: string): Promise<any[]> {
   }
   if (sql.includes("SELECT * FROM Category")) return db.category.findMany();
   if (sql.includes('"Order"')) {
-    return db.order.findMany({ orderBy: { createdAt: "desc" }, include: { items: { include: { product: true } } } }) as any[];
+    return db.order.findMany({ orderBy: { createdAt: "desc" }, include: { items: { include: { product: true } } } }).then((rows) => rows as unknown as any[]);
   }
   return [];
 }
