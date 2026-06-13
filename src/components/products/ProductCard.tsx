@@ -7,7 +7,7 @@ import { useCartStore } from "@/stores/cartStore";
 import { formatTWD } from "@/lib/format";
 import type { Product } from "@/types";
 
-const GOLF_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='500' viewBox='0 0 400 500'%3E%3Crect fill='%23f5f5f5' width='400' height='500'/%3E%3Ctext fill='%23cccccc' font-family='sans-serif' font-size='72' text-anchor='middle' dominant-baseline='central' x='200' y='250'%3EASH%3C/text%3E%3C/svg%3E";
+const GOLF_PLACEHOLDER = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500" viewBox="0 0 400 500"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#1a5632"/><stop offset="100%" style="stop-color:#0d331d"/></linearGradient></defs><rect fill="url(#g)" width="400" height="500"/><circle cx="200" cy="180" r="80" fill="none" stroke="white" stroke-width="1" opacity="0.15"/><text fill="white" font-family="sans-serif" font-size="100" text-anchor="middle" y="250">⛳</text><text fill="white" font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle" y="340">商品圖片</text><text fill="white" font-family="sans-serif" font-size="11" text-anchor="middle" y="365" opacity="0.5">即將更新</text></svg>`)}`;
 
 function getFirstImage(images: string): string {
   if (!images || images === "[]") return "";
