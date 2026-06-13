@@ -27,6 +27,30 @@ async function tursoWrite(sql: string): Promise<{ ok: boolean; error?: string }>
   }
 }
 
+async function tursoCount(sql: string): Promise<number> {
+  const u = process.env.TURSO_DB_URL;
+  const t = process.env.TURSO_AUTH_TOKEN;
+  if (!u || !t) return -1;
+  try {
+    const ctl = new AbortController();
+    const tm = setTimeout(() => ctl.abort(), 10000);
+    const res = await fetch(`${u}/v2/pipeline`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${t}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ requests: [{ type: "execute", stmt: { sql } }] }),
+      signal: ctl.signal,
+    });
+    clearTimeout(tm);
+    const data = await res.json();
+    const r = data.results?.[0];
+    if (r?.type === "ok") {
+      const rows = r.response.result.rows;
+      return parseInt(rows?.[0]?.[0]?.value || "0");
+    }
+    return -1;
+  } catch { return -1; }
+}
+
 // --- GET ---
 export async function GET(request: NextRequest) {
   try {
@@ -60,6 +84,12 @@ export async function POST(request: NextRequest) {
     const now = new Date().toISOString().replace("T", " ").slice(0, 19);
     const s = (v: any) => String(v ?? "").replace(/'/g, "''");
     const q = (v: any) => (v != null && String(v).trim()) ? `'${s(v)}'` : "NULL";
+
+    // 检查 slug 是否已存在
+    const slugCount = await tursoCount(`SELECT count(*) FROM Product WHERE slug = '${s(body.slug)}'`);
+    if (slugCount > 0) {
+      return NextResponse.json({ success: false, error: "此網址 Slug 已被使用，請換一個" }, { status: 400 });
+    }
 
     // 图片：小图直接存，大图后续 UPDATE
     const images = body.images || "[]";
