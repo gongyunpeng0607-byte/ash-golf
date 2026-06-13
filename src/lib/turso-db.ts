@@ -102,8 +102,14 @@ export async function getProductById(id: string): Promise<any> {
 }
 
 // ============ Categories ============
+let _categoriesCache: { data: any[] | null; ts: number } = { data: null, ts: 0 };
+
 export async function getCategories(): Promise<any[]> {
-  return safeQuery("SELECT * FROM Category ORDER BY name");
+  // 分类极少变，缓存 60 秒
+  if (_categoriesCache.data && Date.now() - _categoriesCache.ts < 60000) return _categoriesCache.data;
+  const data = await safeQuery("SELECT * FROM Category ORDER BY name");
+  _categoriesCache = { data, ts: Date.now() };
+  return data;
 }
 
 export async function getCategoryBySlug(slug: string): Promise<any> {

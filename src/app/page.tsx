@@ -1,5 +1,5 @@
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 5;
 import { Suspense } from "react";
 import { HeroBanner } from "@/components/home/HeroBanner";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
