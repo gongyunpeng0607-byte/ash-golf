@@ -30,10 +30,11 @@ export function ProductForm({ categories, product }: ProductFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setError(""); setSaving(true);
-    const data = { ...form, price: parseInt(form.price) || 0, comparePrice: form.comparePrice ? parseInt(form.comparePrice) : null, stock: parseInt(form.stock) || 0 };
+    const { slug, ...rest } = form;
+    const body = isEdit ? { ...rest, price: parseInt(form.price) || 0, comparePrice: form.comparePrice ? parseInt(form.comparePrice) : null, stock: parseInt(form.stock) || 0 } : { ...rest, slug, price: parseInt(form.price) || 0, comparePrice: form.comparePrice ? parseInt(form.comparePrice) : null, stock: parseInt(form.stock) || 0 };
     try {
       const url = isEdit ? `/api/products/${product!.id}` : "/api/products";
-      const res = await fetch(url, { method: isEdit ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+      const res = await fetch(url, { method: isEdit ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const result = await res.json();
       if (result.success) { router.push("/admin/products"); router.refresh(); }
       else { setError(result.error || "儲存失敗"); setSaving(false); }
@@ -49,7 +50,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
         <h2 className="text-xs tracking-[0.15em] uppercase font-bold mb-6 flex items-center gap-2"><span className="w-1 h-4 bg-ash-black" /> 基本資訊</h2>
         <div className="grid sm:grid-cols-2 gap-5">
           <div><label className={L}>商品名稱 *</label><input required className={F} value={form.name} onChange={e => update("name", e.target.value)} placeholder="TAYLORMADE STEALTH 2 DRIVER" /></div>
-          <div><label className={L}>網址 Slug *</label><input required className={F} value={form.slug} onChange={e => update("slug", e.target.value)} placeholder="taylormade-stealth-2" /></div>
+          {!isEdit && <div><label className={L}>網址 Slug *</label><input required className={F} value={form.slug} onChange={e => update("slug", e.target.value)} placeholder="taylormade-stealth-2" /></div>}
           <div className="sm:col-span-2"><label className={L}>商品描述 *</label><textarea required className={F + " resize-none"} value={form.description} onChange={e => update("description", e.target.value)} rows={4} placeholder="描述商品特色..." /></div>
         </div>
       </div>

@@ -49,7 +49,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const now = new Date().toISOString().replace("T", " ").slice(0, 19);
 
     if (body.name !== undefined) sets.push(`name='${s(body.name)}'`);
-    if (body.slug !== undefined) sets.push(`slug='${s(body.slug)}'`);
+    // slug 创建后不允许修改（避免 UNIQUE 冲突）
     if (body.description !== undefined) sets.push(`description='${s(body.description)}'`);
     if (body.price !== undefined) sets.push(`price=${parseInt(body.price) || 0}`);
     if (body.comparePrice !== undefined) {
