@@ -15,10 +15,13 @@ function getFirstImage(images: string): string {
     const arr = JSON.parse(images);
     if (Array.isArray(arr) && arr.length > 0) {
       const first = arr[0];
-      if (typeof first === "string" && first.length > 10) return first;
+      // 只取真图片（base64 > 200 字符），跳过 SVG 占位图
+      if (typeof first === "string" && first.startsWith("data:image/jpeg") && first.length > 200) return first;
+      if (typeof first === "string" && first.startsWith("data:image/png") && first.length > 200) return first;
+      if (typeof first === "string" && first.startsWith("data:image/webp") && first.length > 200) return first;
+      if (typeof first === "string" && first.startsWith("http") && first.length > 15) return first;
     }
   } catch {
-    // JSON被截断，尝试提取第一个data:...到下一个引号
     const m = images.match(/data:image\/[^"]+/);
     if (m) return m[0];
   }

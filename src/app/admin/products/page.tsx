@@ -10,10 +10,13 @@ function getFirstImage(imagesJson: string): string | null {
   if (!imagesJson || imagesJson === "[]") return null;
   try {
     const arr = JSON.parse(imagesJson);
-    if (Array.isArray(arr) && arr.length > 0 && typeof arr[0] === "string" && arr[0].length > 10) return arr[0];
+    if (Array.isArray(arr) && arr.length > 0) {
+      const first = arr[0];
+      if (typeof first !== "string") return null;
+      if (first.startsWith("data:image/jpeg") || first.startsWith("data:image/png") || first.startsWith("data:image/webp") || first.startsWith("http")) return first;
+    }
   } catch {
-    // 截断JSON的备用提取
-    const m = imagesJson.match(/data:image\/[^"]+/);
+    const m = imagesJson.match(/data:image\/(jpeg|png|webp)[^"]+/);
     if (m) return m[0];
   }
   return null;
