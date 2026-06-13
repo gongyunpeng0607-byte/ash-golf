@@ -2,16 +2,31 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Eye, ShoppingCart } from "lucide-react";
+import { Eye } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
 import { formatTWD } from "@/lib/format";
 import type { Product } from "@/types";
 
-const GOLF_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='500' viewBox='0 0 400 500'%3E%3Crect fill='%231a1a2e' width='400' height='500'/%3E%3Ctext fill='%23ffffff20' font-family='sans-serif' font-size='80' text-anchor='middle' x='200' y='260'%3E%E2%9B%B3%3C/text%3E%3C/svg%3E";
+const GOLF_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='500' viewBox='0 0 400 500'%3E%3Crect fill='%23f5f5f5' width='400' height='500'/%3E%3Ctext fill='%23cccccc' font-family='sans-serif' font-size='72' text-anchor='middle' dominant-baseline='central' x='200' y='250'%3EASH%3C/text%3E%3C/svg%3E";
+
+function getFirstImage(images: string): string {
+  if (!images || images === "[]") return "";
+  try {
+    const arr = JSON.parse(images);
+    if (Array.isArray(arr) && arr.length > 0) {
+      const first = arr[0];
+      if (typeof first === "string" && first.length > 10) return first;
+    }
+  } catch {
+    // JSON被截断，尝试提取第一个data:...到下一个引号
+    const m = images.match(/data:image\/[^"]+/);
+    if (m) return m[0];
+  }
+  return "";
+}
 
 export function ProductCard({ product }: { product: Product }) {
-  const images = (() => { try { return JSON.parse(product.images || "[]"); } catch { return []; } })() as string[];
-  const img = images[0] || GOLF_PLACEHOLDER;
+  const img = getFirstImage(product.images || "[]") || GOLF_PLACEHOLDER;
   const hasDiscount = product.comparePrice && product.comparePrice > product.price;
   const addItem = useCartStore(s => s.addItem);
 
@@ -30,20 +45,21 @@ export function ProductCard({ product }: { product: Product }) {
       className="group/card"
     >
       <Link href={`/products/${product.slug}`} className="block">
-        {/* Image — 全宽显示，1:1.25 比例 */}
         <div className="relative aspect-[4/5] bg-white overflow-hidden mb-3 border border-gray-100">
           <img
             src={img}
             alt={product.name}
             className="w-full h-full object-contain transition-transform duration-600 group-hover/card:scale-105"
             loading="lazy"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = GOLF_PLACEHOLDER;
+            }}
           />
 
           {hasDiscount && (
-            <span className="absolute top-0 left-0 bg-white text-black text-[9px] tracking-[0.2em] uppercase px-2.5 py-1 z-10 font-bold">SALE</span>
+            <span className="absolute top-0 left-0 bg-black text-white text-[9px] tracking-[0.2em] uppercase px-2.5 py-1 z-10 font-bold">SALE</span>
           )}
 
-          {/* Hover — 半透明遮罩 + 查看详情 */}
           <div className="absolute inset-0 bg-black/0 group-hover/card:bg-black/40 transition-all duration-400 flex items-center justify-center opacity-0 group-hover/card:opacity-100">
             <span className="flex items-center gap-2 bg-white text-black text-[11px] tracking-[0.1em] uppercase px-6 py-3 font-bold shadow-xl hover:bg-gray-100 transition-colors">
               <Eye className="h-3.5 w-3.5" /> 查看詳情
@@ -57,7 +73,6 @@ export function ProductCard({ product }: { product: Product }) {
           )}
         </div>
 
-        {/* Info */}
         <div>
           {product.brand && (
             <p className="text-[9px] tracking-[0.15em] uppercase text-gray-400 mb-1 font-medium">{product.brand}</p>

@@ -7,7 +7,16 @@ import { Plus, Pencil, Eye } from "lucide-react";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 
 function getFirstImage(imagesJson: string): string | null {
-  try { const arr = JSON.parse(imagesJson); return arr[0] || null; } catch { return null; }
+  if (!imagesJson || imagesJson === "[]") return null;
+  try {
+    const arr = JSON.parse(imagesJson);
+    if (Array.isArray(arr) && arr.length > 0 && typeof arr[0] === "string" && arr[0].length > 10) return arr[0];
+  } catch {
+    // 截断JSON的备用提取
+    const m = imagesJson.match(/data:image\/[^"]+/);
+    if (m) return m[0];
+  }
+  return null;
 }
 
 export default async function AdminProductsPage() {
