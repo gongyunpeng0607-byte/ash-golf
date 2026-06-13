@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import Link from "next/link";
 import { getProducts, getCategories } from "@/lib/turso-db";
 import { formatTWD } from "@/lib/format";

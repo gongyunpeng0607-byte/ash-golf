@@ -5,6 +5,9 @@ import { ORDER_STATUS_LABELS } from "@/lib/constants";
 import { OrderActions } from "@/components/admin/OrderActions";
 import { Eye } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 function extractLineId(note: string): string {
   const i = note.indexOf("LINE:");
   if (i < 0) return "—";
