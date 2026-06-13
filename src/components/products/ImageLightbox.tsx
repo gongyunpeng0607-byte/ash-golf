@@ -118,7 +118,7 @@ export function ImageLightbox({ images, initialIndex, productName, open, onClose
                   i === index ? "border-white scale-110" : "border-white/20 hover:border-white/50 opacity-60 hover:opacity-100"
                 }`}
               >
-                <img src={img} alt="" className="w-full h-full object-cover" />
+                <img src={img} alt="" className="w-full h-full object-contain" />
               </button>
             ))}
           </div>

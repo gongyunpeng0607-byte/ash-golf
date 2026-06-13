@@ -31,11 +31,11 @@ export function ProductCard({ product }: { product: Product }) {
     >
       <Link href={`/products/${product.slug}`} className="block">
         {/* Image — 全宽显示，1:1.25 比例 */}
-        <div className="relative aspect-[4/5] bg-[#1a1a2e] overflow-hidden mb-3">
+        <div className="relative aspect-[4/5] bg-white overflow-hidden mb-3 border border-gray-100">
           <img
             src={img}
             alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-600 group-hover/card:scale-105"
+            className="w-full h-full object-contain transition-transform duration-600 group-hover/card:scale-105"
             loading="lazy"
           />
 

@@ -72,7 +72,7 @@ export function ImageUpload({ value, onChange }: { value: string; onChange: (url
         <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
           {currentImages.map((url, i) => (
             <div key={i} className="relative aspect-square bg-ash-gray-50 rounded-lg overflow-hidden group border border-ash-gray-100">
-              <img src={url} alt="" className="w-full h-full object-cover" />
+              <img src={url} alt="" className="w-full h-full object-contain" />
               <button onClick={() => remove(i)} className="absolute top-1.5 right-1.5 p-1.5 bg-black/60 hover:bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all"><X className="h-3 w-3" /></button>
               <span className="absolute bottom-1.5 left-1.5 bg-black/50 text-white text-[9px] px-1.5 py-0.5 rounded">{i + 1}/{currentImages.length}</span>
             </div>

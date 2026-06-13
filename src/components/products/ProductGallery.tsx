@@ -26,7 +26,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
             <img
               src={displayImages[activeIndex]}
               alt={productName}
-              className="w-full h-full object-cover cursor-zoom-in"
+              className="w-full h-full object-contain cursor-zoom-in"
               onClick={() => setLightboxOpen(true)}
             />
 
@@ -85,7 +85,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                   : "border-transparent hover:border-ash-gray-300 opacity-70 hover:opacity-100"
               }`}
             >
-              <img src={img} alt="" className="w-full h-full object-cover" />
+              <img src={img} alt="" className="w-full h-full object-contain" />
             </button>
           ))}
         </div>
