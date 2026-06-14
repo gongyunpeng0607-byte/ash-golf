@@ -37,18 +37,59 @@ export default function AdminOrdersPage() {
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
+  const [prevIds, setPrevIds] = useState<Set<string>>(new Set());
+  const [newOrderNos, setNewOrderNos] = useState<string[]>([]);
+  const [soundOn, setSoundOn] = useState(true);
+
   const fetchOrders = useCallback(async () => {
     try {
       const res = await fetch("/api/orders?pageSize=200");
       const data = await res.json();
-      if (data.orders) {
+      if (data.orders?.length) {
+        const newIds = new Set(data.orders.map((o: any) => o.id));
+        const incoming = prevIds.size > 0
+          ? data.orders.filter((o: any) => !prevIds.has(o.id))
+          : [];
+        const incomingNos = incoming.map((o: any) => o.orderNo);
+
         setOrders(data.orders);
+        setPrevIds(newIds);
         setLastFetch(formatDateTime(new Date().toISOString()));
+
+        // 检测到新订单 → 音效 + 语音播报
+        if (incomingNos.length > 0) {
+          setNewOrderNos(incomingNos);
+          if (soundOn) {
+            try {
+              const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+              [784, 988, 1175].forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = "sine";
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.15);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.4);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(ctx.currentTime + i * 0.15);
+                osc.stop(ctx.currentTime + i * 0.15 + 0.4);
+              });
+            } catch {}
+            try {
+              if ("speechSynthesis" in window) {
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(`您有 ${incomingNos.length} 筆新的訂單，請及時查看`);
+                u.lang = "zh-TW"; u.rate = 1.0; u.pitch = 1.2; u.volume = 0.9;
+                window.speechSynthesis.speak(u);
+              }
+            } catch {}
+          }
+          setTimeout(() => setNewOrderNos([]), 12000);
+        }
       }
     } catch {} finally {
       setLoading(false);
     }
-  }, []);
+  }, [prevIds, soundOn]);
 
   useEffect(() => {
     fetchOrders();
@@ -100,6 +141,20 @@ export default function AdminOrdersPage() {
 
   return (
     <div>
+      {/* 新订单通知横幅 */}
+      {newOrderNos.length > 0 && (
+        <div className="mb-4 bg-green-500 text-white px-5 py-3 rounded-lg flex items-center justify-between animate-pulse">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🔔</span>
+            <div>
+              <p className="text-sm font-bold">您有 {newOrderNos.length} 筆新的訂單！</p>
+              <p className="text-[11px] text-white/80">{newOrderNos.join("、")}</p>
+            </div>
+          </div>
+          <button onClick={() => setNewOrderNos([])} className="text-white/70 hover:text-white text-lg font-bold px-2">&times;</button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-[22px] font-bold tracking-tight">訂單管理</h1>
@@ -109,6 +164,9 @@ export default function AdminOrdersPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <button onClick={() => setSoundOn(!soundOn)} className={`text-[10px] tracking-wider uppercase px-3 py-2 border transition-colors font-medium ${soundOn ? "bg-green-50 text-green-700 border-green-200" : "text-ash-gray-400 border-ash-gray-200"}`}>
+            {soundOn ? "🔊 語音提醒" : "🔇 靜音"}
+          </button>
           <button onClick={handleExport} disabled={filtered.length === 0} className="flex items-center gap-2 text-[10px] tracking-wider uppercase text-white bg-ash-black hover:bg-ash-gray-800 disabled:opacity-30 px-4 py-2.5 transition-colors font-medium">
             <Download className="h-3 w-3" /> 匯出 CSV
           </button>
