@@ -1,4 +1,4 @@
-export const revalidate = 60;
+export const revalidate = 600;
 import { Suspense } from "react";
 import { HeroBanner } from "@/components/home/HeroBanner";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
