@@ -1,5 +1,4 @@
-export const dynamic = 'force-dynamic';
-export const revalidate = 10;
+export const revalidate = 60;
 import { Suspense } from "react";
 import Link from "next/link";
 import { getProducts, getCategories } from "@/lib/turso-db";
