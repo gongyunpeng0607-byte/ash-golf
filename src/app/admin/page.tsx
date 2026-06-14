@@ -7,7 +7,7 @@ import { Box, ShoppingBag, TrendingUp, Plus, ArrowRight } from "lucide-react";
 
 export default async function AdminDashboard() {
   const [{ total: productCount }, { orders, total: orderCount }] = await Promise.all([
-    getProducts({ where: "1=1", take: 0 }),
+    getProducts({ where: "isActive = 1", take: 0 }),
     getOrders(),
   ]);
 

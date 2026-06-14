@@ -24,7 +24,7 @@ function getFirstImage(imagesJson: string): string | null {
 
 export default async function AdminProductsPage() {
   const [{ products }, categories] = await Promise.all([
-    getProducts({ where: "1=1", orderBy: "createdAt DESC", take: 100 }),
+    getProducts({ where: "isActive = 1", orderBy: "createdAt DESC", take: 999 }),
     getCategories(),
   ]);
 
