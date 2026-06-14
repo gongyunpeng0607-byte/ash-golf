@@ -98,10 +98,42 @@ export default function AdminProductsPage() {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-6">
-          <button onClick={() => fetchData(page-1)} disabled={page<=1} className="p-2 border border-ash-gray-200 hover:border-ash-black disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><ChevronLeft className="h-4 w-4"/></button>
-          <span className="text-[13px] text-ash-gray-500 px-3">第 {page} 頁 / 共 {totalPages} 頁</span>
-          <button onClick={() => fetchData(page+1)} disabled={page>=totalPages} className="p-2 border border-ash-gray-200 hover:border-ash-black disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><ChevronRight className="h-4 w-4"/></button>
+        <div className="flex items-center justify-center gap-1.5 mt-6 flex-wrap">
+          {/* 首页 */}
+          <button onClick={() => fetchData(1)} disabled={page<=1} className="px-2.5 py-1.5 text-[11px] border border-ash-gray-200 hover:border-ash-black disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+            首頁
+          </button>
+          <button onClick={() => fetchData(page-1)} disabled={page<=1} className="p-1.5 border border-ash-gray-200 hover:border-ash-black disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><ChevronLeft className="h-3.5 w-3.5"/></button>
+
+          {/* 页码 */}
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter(pg => pg === 1 || pg === totalPages || Math.abs(pg - page) <= 2)
+            .map((pg, idx, arr) => (
+              <span key={pg}>
+                {idx > 0 && arr[idx-1] !== pg - 1 && <span className="text-ash-gray-300 px-1">...</span>}
+                <button
+                  onClick={() => fetchData(pg)}
+                  className={`w-9 h-9 text-[12px] border transition-colors ${
+                    pg === page ? "bg-ash-black text-white border-ash-black" : "border-ash-gray-200 hover:border-ash-black"
+                  }`}
+                >
+                  {pg}
+                </button>
+              </span>
+            ))}
+
+          <button onClick={() => fetchData(page+1)} disabled={page>=totalPages} className="p-1.5 border border-ash-gray-200 hover:border-ash-black disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><ChevronRight className="h-3.5 w-3.5"/></button>
+          {/* 末页 */}
+          <button onClick={() => fetchData(totalPages)} disabled={page>=totalPages} className="px-2.5 py-1.5 text-[11px] border border-ash-gray-200 hover:border-ash-black disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+            末頁
+          </button>
+
+          {/* 跳转 */}
+          <form onSubmit={e => { e.preventDefault(); const input = (e.target as HTMLFormElement).pg as HTMLInputElement; const n = parseInt(input.value); if (n>=1 && n<=totalPages) fetchData(n); }} className="flex items-center gap-1 ml-3">
+            <span className="text-[11px] text-ash-gray-400">跳至</span>
+            <input name="pg" type="number" min={1} max={totalPages} placeholder={String(page)} className="w-12 text-center border border-ash-gray-200 px-1.5 py-1.5 text-[12px] outline-none focus:border-ash-black" />
+            <span className="text-[11px] text-ash-gray-400">頁</span>
+          </form>
         </div>
       )}
     </div>
