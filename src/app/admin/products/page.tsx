@@ -8,16 +8,13 @@ import { DeleteButton } from "@/components/admin/DeleteButton";
 
 const PAGE_SIZE = 20;
 
-function ThumbImg({ productId }: { productId: string }) {
-  return (
-    <img
-      src={`/api/products/${productId}/thumb`}
-      alt=""
-      className="w-full h-full object-contain"
-      loading="lazy"
-      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-    />
-  );
+function getFirstImage(images: string): string | null {
+  if (!images || images === "[]") return null;
+  try {
+    const arr = JSON.parse(images);
+    if (Array.isArray(arr) && arr.length > 0 && typeof arr[0] === "string" && arr[0].length > 10) return arr[0];
+  } catch {}
+  return null;
 }
 
 export default function AdminProductsPage() {
@@ -68,11 +65,15 @@ export default function AdminProductsPage() {
         <table className="w-full">
           <thead><tr className="border-b border-ash-gray-50"><th className="text-left px-5 py-3.5 text-[10px] font-medium text-ash-gray-400 uppercase tracking-wider">商品</th><th className="text-left px-5 py-3.5 text-[10px] font-medium text-ash-gray-400 uppercase tracking-wider">分類</th><th className="text-left px-5 py-3.5 text-[10px] font-medium text-ash-gray-400 uppercase tracking-wider">價格</th><th className="text-left px-5 py-3.5 text-[10px] font-medium text-ash-gray-400 uppercase tracking-wider">庫存</th><th className="text-left px-5 py-3.5 text-[10px] font-medium text-ash-gray-400 uppercase tracking-wider">狀態</th><th className="text-right px-5 py-3.5 text-[10px] font-medium text-ash-gray-400 uppercase tracking-wider">操作</th></tr></thead>
           <tbody>
-            {products.map((p: any) => (
+            {products.map((p: any) => {
+              const img = getFirstImage(p.images || "[]");
+              return (
               <tr key={p.id} className="border-b border-ash-gray-50 hover:bg-ash-gray-50/50 transition-colors">
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 bg-ash-gray-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center"><ThumbImg productId={p.id} /></div>
+                    <div className="w-11 h-11 bg-ash-gray-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
+                      {img ? <img src={img} alt="" className="w-full h-full object-contain" /> : <span className="text-base">⛳</span>}
+                    </div>
                     <div><p className="text-[13px] font-medium truncate max-w-[200px]">{p.name}</p><p className="text-[10px] text-ash-gray-400">{p.brand||"—"}</p></div>
                   </div>
                 </td>
@@ -88,7 +89,8 @@ export default function AdminProductsPage() {
                   </div>
                 </td>
               </tr>
-            ))}
+            );
+            })}
             {!loading && products.length===0 && <tr><td colSpan={6} className="px-5 py-20 text-center text-[13px] text-ash-gray-300">尚無商品，<Link href="/admin/products/new" className="text-ash-black underline">新增第一件商品</Link></td></tr>}
             {loading && <tr><td colSpan={6} className="px-5 py-16 text-center"><RefreshCw className="h-4 w-4 inline animate-spin text-ash-gray-400"/></td></tr>}
           </tbody>
