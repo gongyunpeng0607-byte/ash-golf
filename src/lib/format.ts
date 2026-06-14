@@ -20,7 +20,7 @@ export function generateOrderNo(): string {
 }
 
 /**
- * 格式化日期
+ * 格式化日期（仅日期）
  */
 export function formatDate(date: Date | string): string {
   return new Date(date).toLocaleDateString("zh-TW", {
@@ -28,6 +28,20 @@ export function formatDate(date: Date | string): string {
     month: "long",
     day: "numeric",
   });
+}
+
+/**
+ * 格式化日期时间（精确到秒）
+ */
+export function formatDateTime(ts: Date | string): string {
+  const d = new Date(ts);
+  const y = d.getFullYear();
+  const M = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const h = String(d.getHours()).padStart(2, "0");
+  const m = String(d.getMinutes()).padStart(2, "0");
+  const s = String(d.getSeconds()).padStart(2, "0");
+  return `${y}/${M}/${day} ${h}:${m}:${s}`;
 }
 
 /**

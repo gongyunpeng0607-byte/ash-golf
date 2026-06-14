@@ -1,29 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { getOrders } from "@/lib/turso-db";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get("page") || "1");
-  const pageSize = parseInt(searchParams.get("pageSize") || "20");
-
-  const [orders, total] = await Promise.all([
-    db.order.findMany({
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-      include: {
-        items: {
-          include: { product: true },
-        },
-      },
-    }),
-    db.order.count(),
-  ]);
-
-  return NextResponse.json({
-    orders,
-    total,
-    page,
-    totalPages: Math.ceil(total / pageSize),
-  });
+  try {
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const pageSize = parseInt(searchParams.get("pageSize") || "50");
+    const { orders, total } = await getOrders(page, pageSize);
+    return NextResponse.json({ orders, total, page, totalPages: Math.ceil(total / pageSize) });
+  } catch {
+    return NextResponse.json({ orders: [], total: 0 });
+  }
 }

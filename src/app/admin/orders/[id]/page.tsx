@@ -3,7 +3,7 @@ export const revalidate = 0;
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getOrderById } from "@/lib/turso-db";
-import { formatTWD, formatDate } from "@/lib/format";
+import { formatTWD, formatDateTime } from "@/lib/format";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
 import { ArrowLeft, MapPin, Phone, User, Package, Truck, Clock, FileText, MessageCircle, Mail } from "lucide-react";
 
@@ -59,7 +59,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
           <div className="space-y-4">
             <div className="flex items-center gap-3"><Truck className="h-4 w-4 text-ash-gray-300 shrink-0"/><span className="text-[11px] text-ash-gray-400 w-12 shrink-0">付款</span><span className="text-[13px] font-medium">貨到付款</span></div>
             <div className="flex items-center gap-3"><Truck className="h-4 w-4 text-ash-gray-300 shrink-0"/><span className="text-[11px] text-ash-gray-400 w-12 shrink-0">配送</span><span className="text-[13px] font-medium">{(order.shippingMethod as string)==="home"?"宅配到府":order.shippingMethod}</span></div>
-            <div className="flex items-center gap-3"><Clock className="h-4 w-4 text-ash-gray-300 shrink-0"/><span className="text-[11px] text-ash-gray-400 w-12 shrink-0">日期</span><span className="text-[13px] font-medium">{formatDate(order.createdAt as string)}</span></div>
+            <div className="flex items-center gap-3"><Clock className="h-4 w-4 text-ash-gray-300 shrink-0"/><span className="text-[11px] text-ash-gray-400 w-12 shrink-0">日期</span><span className="text-[13px] font-medium font-mono">{formatDateTime(order.createdAt as string)}</span></div>
           </div>
 
           {lineId && (
