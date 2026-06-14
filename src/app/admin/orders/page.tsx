@@ -5,8 +5,7 @@ import Link from "next/link";
 import { formatTWD } from "@/lib/format";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
 import { OrderActions } from "@/components/admin/OrderActions";
-import { Eye, RefreshCw, Search, Download, X, Filter, Settings } from "lucide-react";
-import { useOrderSound, fireOrderSound, OrderSoundPanel } from "@/components/admin/OrderSoundPanel";
+import { Eye, RefreshCw, Search, Download, X, Filter } from "lucide-react";
 
 function extractLineId(note: string): string {
   const i = note.indexOf("LINE:");
@@ -41,8 +40,6 @@ export default function AdminOrdersPage() {
   const [prevIds, setPrevIds] = useState<Set<string>>(new Set());
   const [newOrderNos, setNewOrderNos] = useState<string[]>([]);
   const [soundOn, setSoundOn] = useState(true);
-  const [soundPanelOpen, setSoundPanelOpen] = useState(false);
-  const { settings, update: updateSound } = useOrderSound();
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -62,7 +59,30 @@ export default function AdminOrdersPage() {
         // 检测到新订单 → 音效 + 语音播报
         if (incomingNos.length > 0) {
           setNewOrderNos(incomingNos);
-          if (soundOn) fireOrderSound(settings, incomingNos.length);
+          if (soundOn) {
+            try {
+              const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+              [784, 988, 1175].forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = "sine";
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.15);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.4);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(ctx.currentTime + i * 0.15);
+                osc.stop(ctx.currentTime + i * 0.15 + 0.4);
+              });
+            } catch {}
+            try {
+              if ("speechSynthesis" in window) {
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(`您有 ${incomingNos.length} 筆新的訂單，請及時查看`);
+                u.lang = "zh-TW"; u.rate = 1.0; u.pitch = 1.2; u.volume = 0.9;
+                window.speechSynthesis.speak(u);
+              }
+            } catch {}
+          }
           setTimeout(() => setNewOrderNos([]), 12000);
         }
       }
@@ -146,9 +166,6 @@ export default function AdminOrdersPage() {
         <div className="flex items-center gap-2">
           <button onClick={() => setSoundOn(!soundOn)} className={`text-[10px] tracking-wider uppercase px-3 py-2 border transition-colors font-medium ${soundOn ? "bg-green-50 text-green-700 border-green-200" : "text-ash-gray-400 border-ash-gray-200"}`}>
             {soundOn ? "🔔 來單提醒" : "🔇 靜音"}
-          </button>
-          <button onClick={() => setSoundPanelOpen(true)} className="text-[10px] tracking-wider uppercase text-ash-gray-500 hover:text-ash-black px-3 py-2 border border-ash-gray-200 hover:border-ash-black transition-colors font-medium flex items-center gap-1">
-            <Settings className="h-3 w-3"/> 聲音設定
           </button>
           <button onClick={handleExport} disabled={filtered.length === 0} className="flex items-center gap-2 text-[10px] tracking-wider uppercase text-white bg-ash-black hover:bg-ash-gray-800 disabled:opacity-30 px-4 py-2.5 transition-colors font-medium">
             <Download className="h-3 w-3" /> 匯出 CSV
@@ -253,13 +270,6 @@ export default function AdminOrdersPage() {
         </table>
       </div>
 
-      {soundPanelOpen && (
-        <OrderSoundPanel
-          settings={settings}
-          update={updateSound}
-          onClose={() => setSoundPanelOpen(false)}
-        />
-      )}
     </div>
   );
 }
