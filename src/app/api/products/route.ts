@@ -64,8 +64,14 @@ export async function GET(request: NextRequest) {
     if (q) w += ` AND (name LIKE '%${q.replace(/'/g, "''")}%' OR description LIKE '%${q.replace(/'/g, "''")}%' OR brand LIKE '%${q.replace(/'/g, "''")}%')`;
     if (cid) w += ` AND categoryId = '${cid}'`;
     const ob = sort === "price-asc" ? "price ASC" : sort === "price-desc" ? "price DESC" : "createdAt DESC";
-    const [{ products, total }, cats] = await Promise.all([getProducts({ where: w, orderBy: ob, skip: (page - 1) * ps, take: ps }), getCategories()]);
-    return NextResponse.json({ products, total, page, ps, totalPages: Math.ceil(total / ps), categories: cats });
+    const [{ products, total }, cats] = await Promise.all([getProducts({ where: w, orderBy: ob, skip: (page - 1) * ps, take: ps, ttl: 10000 }), getCategories()]);
+    // 去掉超大的 base64 图片（>200字符），提升 API 响应速度
+    const slimProducts = products.map((p: any) => {
+      const imgs = p.images || "[]";
+      if (imgs === "[]" || imgs.length <= 200) return p;
+      return { ...p, images: "[]" };
+    });
+    return NextResponse.json({ products: slimProducts, total, page, ps, totalPages: Math.ceil(total / ps), categories: cats });
   } catch { return NextResponse.json({ products: [], total: 0 }); }
 }
 

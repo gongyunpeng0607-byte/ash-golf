@@ -35,31 +35,34 @@ export default function AdminProductsPage() {
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
+  // 分类缓存（很少变）
+  const loadCategories = useCallback(async () => {
+    try {
+      const cached = sessionStorage.getItem("admin_cats");
+      if (cached) { setCategories(JSON.parse(cached)); return; }
+      const res = await fetch("/api/products?page=1&pageSize=1");
+      const data = await res.json();
+      if (data.categories) {
+        setCategories(data.categories);
+        sessionStorage.setItem("admin_cats", JSON.stringify(data.categories));
+      }
+    } catch {}
+  }, []);
+
   const fetchData = useCallback(async (pg: number) => {
     setLoading(true);
     try {
-      const [pRes, cRes] = await Promise.all([
-        fetch(`/api/products?page=${pg}&pageSize=${PAGE_SIZE}`),
-        fetch("/api/products?page=1&pageSize=1"), // trick: get categories via API
-      ]);
-      const pData = await pRes.json();
-      setProducts(pData.products || []);
-      setTotal(pData.total || 0);
+      const res = await fetch(`/api/products?page=${pg}&pageSize=${PAGE_SIZE}`);
+      const data = await res.json();
+      setProducts(data.products || []);
+      setTotal(data.total || 0);
       setPage(pg);
-
-      // categories cached
-      if (categories.length === 0) {
-        try {
-          const cData = await cRes.json();
-          if (cData.categories) setCategories(cData.categories);
-        } catch {}
-      }
     } catch {} finally {
       setLoading(false);
     }
-  }, [categories.length]);
+  }, []);
 
-  useEffect(() => { fetchData(1); }, []);
+  useEffect(() => { loadCategories(); fetchData(1); }, [fetchData, loadCategories]);
 
   const catMap = new Map(categories.map((c: any) => [c.id, c.name]));
 
