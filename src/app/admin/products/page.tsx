@@ -8,29 +8,15 @@ import { DeleteButton } from "@/components/admin/DeleteButton";
 
 const PAGE_SIZE = 20;
 
-function ThumbCell({ productId }: { productId: string }) {
-  const [src, setSrc] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    const img = new Image();
-    img.onload = () => { if (!cancelled) { setSrc(`/api/products/${productId}/thumb`); setLoaded(true); } };
-    img.onerror = () => { if (!cancelled) setLoaded(true); };
-    img.src = `/api/products/${productId}/thumb`;
-    return () => { cancelled = true; };
-  }, [productId]);
-
+function ThumbImg({ productId }: { productId: string }) {
   return (
-    <div className="w-11 h-11 bg-ash-gray-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
-      {src ? (
-        <img src={src} alt="" className="w-full h-full object-contain" />
-      ) : loaded ? (
-        <span className="text-base">⛳</span>
-      ) : (
-        <span className="text-[10px] text-ash-gray-300">⏳</span>
-      )}
-    </div>
+    <img
+      src={`/api/products/${productId}/thumb`}
+      alt=""
+      className="w-full h-full object-contain"
+      loading="lazy"
+      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+    />
   );
 }
 
@@ -86,7 +72,7 @@ export default function AdminProductsPage() {
               <tr key={p.id} className="border-b border-ash-gray-50 hover:bg-ash-gray-50/50 transition-colors">
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-3">
-                    <ThumbCell productId={p.id} />
+                    <div className="w-11 h-11 bg-ash-gray-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center"><ThumbImg productId={p.id} /></div>
                     <div><p className="text-[13px] font-medium truncate max-w-[200px]">{p.name}</p><p className="text-[10px] text-ash-gray-400">{p.brand||"—"}</p></div>
                   </div>
                 </td>

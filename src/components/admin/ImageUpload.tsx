@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { X, Upload, Loader2 } from "lucide-react";
 
-// Canvas 压缩：最大 550px 宽，JPEG 质量 0.4 → ~20-50KB/张
+// Canvas 极速压缩：最大 350px 宽，JPEG 质量 0.3 → ~8-15KB/张（秒传）
 async function compressImage(file: File): Promise<string> {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -11,13 +11,13 @@ async function compressImage(file: File): Promise<string> {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const maxW = 550;
+        const maxW = 350;
         let w = img.width, h = img.height;
         if (w > maxW) { h = h * maxW / w; w = maxW; }
         canvas.width = Math.round(w); canvas.height = Math.round(h);
         const ctx = canvas.getContext("2d")!;
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.4));
+        resolve(canvas.toDataURL("image/jpeg", 0.3));
       };
       img.src = reader.result as string;
     };
