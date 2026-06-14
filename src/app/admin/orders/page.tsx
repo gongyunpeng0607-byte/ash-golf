@@ -46,11 +46,11 @@ export default function AdminOrdersPage() {
       const res = await fetch("/api/orders?pageSize=200");
       const data = await res.json();
       if (data.orders?.length) {
-        const newIds = new Set(data.orders.map((o: any) => o.id));
+        const newIds = new Set<string>(data.orders.map((o: any) => String(o.id)));
         const incoming = prevIds.size > 0
           ? data.orders.filter((o: any) => !prevIds.has(o.id))
           : [];
-        const incomingNos = incoming.map((o: any) => o.orderNo);
+        const incomingNos = incoming.map((o: any) => String(o.orderNo));
 
         setOrders(data.orders);
         setPrevIds(newIds);
