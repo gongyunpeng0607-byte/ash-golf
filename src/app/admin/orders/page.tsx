@@ -60,26 +60,58 @@ export default function AdminOrdersPage() {
         if (incomingNos.length > 0) {
           setNewOrderNos(incomingNos);
           if (soundOn) {
+            // 🔔 柔和提示音（风铃声）
             try {
               const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-              [784, 988, 1175].forEach((freq, i) => {
+              const melody = [523.25, 659.25, 783.99, 1046.5]; // C5→E5→G5→C6 温暖上行
+              melody.forEach((freq, i) => {
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
-                osc.type = "sine";
+                osc.type = "triangle"; // 三角波比正弦波更柔和
                 osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.15);
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.4);
+                gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.12);
+                gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + i * 0.12 + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.5);
                 osc.connect(gain); gain.connect(ctx.destination);
-                osc.start(ctx.currentTime + i * 0.15);
-                osc.stop(ctx.currentTime + i * 0.15 + 0.4);
+                osc.start(ctx.currentTime + i * 0.12);
+                osc.stop(ctx.currentTime + i * 0.12 + 0.5);
               });
             } catch {}
+            // 🗣️ 真人女声播报
             try {
               if ("speechSynthesis" in window) {
-                window.speechSynthesis.cancel();
-                const u = new SpeechSynthesisUtterance(`您有 ${incomingNos.length} 筆新的訂單，請及時查看`);
-                u.lang = "zh-TW"; u.rate = 1.0; u.pitch = 1.2; u.volume = 0.9;
-                window.speechSynthesis.speak(u);
+                const speak = () => {
+                  window.speechSynthesis.cancel();
+                  const u = new SpeechSynthesisUtterance(
+                    `叮咚～ 您有 ${incomingNos.length} 筆新的訂單，請及時查看哦`
+                  );
+                  u.lang = "zh-TW";
+                  u.rate = 0.9;     // 稍慢，更清晰
+                  u.pitch = 1.35;    // 偏高 → 女声
+                  u.volume = 0.8;
+
+                  // 找中文女声
+                  const voices = window.speechSynthesis.getVoices();
+                  const female = voices.find(v =>
+                    v.lang.startsWith("zh") && (
+                      v.name.includes("Ting-Ting") ||
+                      v.name.includes("Mei-Jia") ||
+                      v.name.includes("Female") ||
+                      v.name.toLowerCase().includes("female")
+                    )
+                  ) || voices.find(v => v.lang.startsWith("zh-TW")) ||
+                    voices.find(v => v.lang.startsWith("zh"));
+                  if (female) u.voice = female;
+
+                  window.speechSynthesis.speak(u);
+                };
+
+                // 确保 voices 已加载（异步）
+                if (window.speechSynthesis.getVoices().length > 0) {
+                  speak();
+                } else {
+                  window.speechSynthesis.onvoiceschanged = speak;
+                }
               }
             } catch {}
           }
@@ -165,7 +197,7 @@ export default function AdminOrdersPage() {
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setSoundOn(!soundOn)} className={`text-[10px] tracking-wider uppercase px-3 py-2 border transition-colors font-medium ${soundOn ? "bg-green-50 text-green-700 border-green-200" : "text-ash-gray-400 border-ash-gray-200"}`}>
-            {soundOn ? "🔊 語音提醒" : "🔇 靜音"}
+            {soundOn ? "🔔 來單提醒" : "🔇 靜音"}
           </button>
           <button onClick={handleExport} disabled={filtered.length === 0} className="flex items-center gap-2 text-[10px] tracking-wider uppercase text-white bg-ash-black hover:bg-ash-gray-800 disabled:opacity-30 px-4 py-2.5 transition-colors font-medium">
             <Download className="h-3 w-3" /> 匯出 CSV
