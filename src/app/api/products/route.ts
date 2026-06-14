@@ -65,13 +65,8 @@ export async function GET(request: NextRequest) {
     if (cid) w += ` AND categoryId = '${cid}'`;
     const ob = sort === "price-asc" ? "price ASC" : sort === "price-desc" ? "price DESC" : "createdAt DESC";
     const [{ products, total }, cats] = await Promise.all([getProducts({ where: w, orderBy: ob, skip: (page - 1) * ps, take: ps, ttl: 10000 }), getCategories()]);
-    // 去掉超大的 base64 图片（>200字符），提升 API 响应速度
-    const slimProducts = products.map((p: any) => {
-      const imgs = p.images || "[]";
-      if (imgs === "[]" || imgs.length <= 200) return p;
-      return { ...p, images: "[]" };
-    });
-    return NextResponse.json({ products: slimProducts, total, page, ps, totalPages: Math.ceil(total / ps), categories: cats });
+    // 列表不返回 images 字段（太大），前端异步加载缩略图
+    return NextResponse.json({ products, total, page, ps, totalPages: Math.ceil(total / ps), categories: cats });
   } catch { return NextResponse.json({ products: [], total: 0 }); }
 }
 
