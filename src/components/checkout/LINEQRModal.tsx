@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { X, Copy, ExternalLink, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const LINE_URL = "https://line.me/ti/p/D9bL_8WYej";
+const LINE_URL = "https://line.me/ti/p/3YdstG77NF";
+const LINE_DEEPLINK = "line://ti/p/3YdstG77NF";
 
 interface LINEQRModalProps {
   open: boolean;
@@ -16,6 +17,7 @@ export function LINEQRModal({ open, onClose, orderNo }: LINEQRModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [copied, setCopied] = useState(false);
   const [qrReady, setQrReady] = useState(false);
+  const [opening, setOpening] = useState(false);
 
   useEffect(() => {
     if (!open || !canvasRef.current) return;
@@ -23,7 +25,7 @@ export function LINEQRModal({ open, onClose, orderNo }: LINEQRModalProps) {
 
     import("qrcode").then((QRCode) => {
       if (cancelled) return;
-      QRCode.toCanvas(canvasRef.current, LINE_URL, {
+      QRCode.toCanvas(canvasRef.current, LINE_URL, {  
         width: 200,
         margin: 2,
         color: { dark: "#000000", light: "#ffffff" },
@@ -31,11 +33,36 @@ export function LINEQRModal({ open, onClose, orderNo }: LINEQRModalProps) {
       setQrReady(true);
     }).catch(() => {
       // fallback: show QR via API image
-      setQrReady(true);
+      setQrReady(true);           
     });
 
     return () => { cancelled = true; };
   }, [open]);
+
+  const handleOpenLine = () => {
+    if (opening) return;
+    setOpening(true);
+
+    const isMobile = typeof window !== "undefined" && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    const fallbackDelay = isMobile ? 1200 : 400;
+
+    const fallbackTimer = window.setTimeout(() => {
+      window.open(LINE_URL, "_blank", "noopener,noreferrer");
+      setOpening(false);
+    }, fallbackDelay);
+
+    try {
+      window.location.href = LINE_DEEPLINK;
+    } catch {
+      window.open(LINE_URL, "_blank", "noopener,noreferrer");
+      setOpening(false);
+    }
+
+    window.setTimeout(() => {
+      window.clearTimeout(fallbackTimer);
+      setOpening(false);
+    }, fallbackDelay + 600);
+  };
 
   const handleCopy = async () => {
     try {
@@ -103,14 +130,14 @@ export function LINEQRModal({ open, onClose, orderNo }: LINEQRModalProps) {
                   {copied ? "已複製" : "複製"}
                 </button>
               </div>
-              <a
-                href={LINE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full bg-[#06C755] text-white text-xs tracking-wider uppercase py-3 font-bold hover:bg-[#05b34a] transition-colors"
+              <button
+                type="button"
+                onClick={handleOpenLine}
+                disabled={opening}
+                className="flex items-center justify-center gap-2 w-full bg-[#06C755] text-white text-xs tracking-wider uppercase py-3 font-bold hover:bg-[#05b34a] transition-colors disabled:opacity-70"
               >
-                <ExternalLink className="h-3.5 w-3.5" /> 直接加入 LINE 好友
-              </a>
+                <ExternalLink className="h-3.5 w-3.5" /> {opening ? "開啟中..." : "直接加入 LINE 好友"}
+              </button>
             </div>
 
             <button
