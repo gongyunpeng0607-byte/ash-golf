@@ -54,6 +54,7 @@ async function main() {
       userId TEXT, sessionId TEXT, createdAt TEXT DEFAULT (datetime('now')),
       updatedAt TEXT DEFAULT (datetime('now'))
     )`]);
+  await execute([`CREATE TABLE IF NOT EXISTS AdminUser (id TEXT PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, name TEXT, createdAt TEXT DEFAULT (datetime('now')))`]);
   console.log("✓ 表已创建");
 
   // 种子数据

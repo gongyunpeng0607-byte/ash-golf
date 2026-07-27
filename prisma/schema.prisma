@@ -136,3 +136,11 @@ model OrderItem {
   quantity  Int
   price     Int
 }
+
+model AdminUser {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+}

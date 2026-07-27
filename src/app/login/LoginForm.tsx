@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Lock, User, LogIn } from "lucide-react";
 
 export function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/admin";
 
@@ -16,35 +15,33 @@ export function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // 读取 Auth.js 重定向回来的错误参数
+  useEffect(() => {
+    const errParam = searchParams.get("error");
+    if (errParam) {
+      if (errParam === "CredentialsSignin") {
+        setError("帳號或密碼錯誤，請重試");
+      } else {
+        setError(`登入失敗：${errParam}`);
+      }
+    }
+  }, [searchParams]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    try {
-      const result = await signIn("credentials", {
-        username,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        if (result.error === "CredentialsSignin") {
-          setError("帳號或密碼錯誤，請重試");
-        } else if (result.error === "Configuration") {
-          setError("伺服器設定錯誤，請聯繫管理員");
-        } else {
-          setError(`登入失敗：${result.error}`);
-        }
-      } else {
-        router.push(callbackUrl);
-        router.refresh();
-      }
-    } catch (err: any) {
-      setError("登入失敗，請稍後再試");
-    } finally {
-      setLoading(false);
-    }
+    // redirect: true — 成功时 Auth.js 直接 302 跳转，省掉一次客户端往返
+    // 失败时 Auth.js 302 回到 /login?error=CredentialsSignin
+    await signIn("credentials", {
+      username,
+      password,
+      redirect: true,
+      callbackUrl,
+    });
+    // 成功时不会执行到这里（已跳转）
+    // 失败时页面会刷新，这里的 loading 已不重要
   };
 
   return (
@@ -81,6 +78,7 @@ export function LoginForm() {
               onChange={(e) => setUsername(e.target.value)}
               placeholder="輸入帳號"
               required
+              autoComplete="username"
               className="flex-1 text-sm outline-none bg-transparent placeholder:text-ash-gray-300"
             />
           </div>
@@ -98,6 +96,7 @@ export function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="輸入密碼"
               required
+              autoComplete="current-password"
               className="flex-1 text-sm outline-none bg-transparent placeholder:text-ash-gray-300"
             />
           </div>

@@ -144,3 +144,65 @@ export async function getOrderById(id: string): Promise<any> {
 }
 
 export function clearCache() { CACHE.clear(); }
+
+// ============ AdminUser ============
+
+export async function getAdminUser(username: string): Promise<any> {
+  if (isLocalDev) {
+    const { db } = await import("./db");
+    return db.adminUser.findUnique({ where: { username } });
+  }
+  const rows = await query(
+    `SELECT * FROM AdminUser WHERE username = '${username.replace(/'/g, "''")}'`
+  );
+  return rows[0] || null;
+}
+
+export async function listAdminUsers(): Promise<any[]> {
+  if (isLocalDev) {
+    const { db } = await import("./db");
+    return db.adminUser.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, username: true, name: true, createdAt: true } });
+  }
+  return query("SELECT id, username, name, createdAt FROM AdminUser ORDER BY createdAt DESC");
+}
+
+export async function createAdminUser(data: { username: string; password: string; name?: string }): Promise<any> {
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString().replace("T", " ").slice(0, 19);
+  const s = (v: string) => v.replace(/'/g, "''");
+  if (isLocalDev) {
+    const { db } = await import("./db");
+    return db.adminUser.create({ data: { id, ...data } });
+  }
+  const sql = `INSERT INTO AdminUser(id,username,password,name,createdAt) VALUES('${id}','${s(data.username)}','${s(data.password)}','${data.name ? s(data.name) : "NULL"}','${now}')`;
+  await query(sql);
+  return { id, username: data.username, name: data.name };
+}
+
+export async function updateAdminUserPassword(id: string, hashedPassword: string): Promise<void> {
+  const s = (v: string) => v.replace(/'/g, "''");
+  if (isLocalDev) {
+    const { db } = await import("./db");
+    await db.adminUser.update({ where: { id }, data: { password: hashedPassword } });
+    return;
+  }
+  await query(`UPDATE AdminUser SET password = '${s(hashedPassword)}' WHERE id = '${id}'`);
+}
+
+export async function deleteAdminUser(id: string): Promise<void> {
+  if (isLocalDev) {
+    const { db } = await import("./db");
+    await db.adminUser.delete({ where: { id } });
+    return;
+  }
+  await query(`DELETE FROM AdminUser WHERE id = '${id}'`);
+}
+
+export async function countAdminUsers(): Promise<number> {
+  if (isLocalDev) {
+    const { db } = await import("./db");
+    return db.adminUser.count();
+  }
+  const rows = await query("SELECT count(*) as total FROM AdminUser");
+  return Number(rows[0]?.total || 0);
+}

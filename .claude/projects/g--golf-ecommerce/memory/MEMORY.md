@@ -1,0 +1,1 @@
+- [Auto push after commit](auto-push-after-commit.md) — 每次 commit 后自动 push 到 GitHub

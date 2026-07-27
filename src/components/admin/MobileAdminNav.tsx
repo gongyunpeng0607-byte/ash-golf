@@ -10,6 +10,7 @@ import {
   X,
   LogOut,
   Home,
+  Users,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -17,6 +18,7 @@ const links = [
   { href: "/admin", label: "儀表板", icon: LayoutDashboard },
   { href: "/admin/products", label: "商品管理", icon: Box },
   { href: "/admin/orders", label: "訂單管理", icon: ShoppingBag },
+  { href: "/admin/users", label: "帳號管理", icon: Users },
 ];
 
 export function MobileAdminNav({
