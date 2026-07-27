@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { SITE_NAME, SITE_DESCRIPTION, SITE_URL } from "@/lib/constants";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { Providers } from "@/components/auth/Providers";
+import { auth } from "@/auth";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -31,17 +33,21 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+
   return (
     <html lang="zh-Hant">
       <body className="min-h-screen bg-white antialiased flex flex-col">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <Providers session={session}>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

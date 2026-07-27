@@ -65,7 +65,8 @@ async function cachedQuery(sql: string, ttl: number): Promise<any[]> {
 async function localQuery(sql: string): Promise<any[]> {
   const { db } = await import("./db");
   if (sql.includes("count(*)") && sql.includes("Product")) {
-    const c = await db.product.count({ where: { isActive: true } });
+    const allProducts = sql.includes("1=1");
+    const c = await db.product.count({ where: allProducts ? {} : { isActive: true } });
     return [{ total: c }];
   }
   if (sql.includes("slug =") && sql.includes("Product p")) {
@@ -77,7 +78,8 @@ async function localQuery(sql: string): Promise<any[]> {
     if (m) { const p = await db.product.findUnique({ where: { id: m[1] } }); return p ? [p] : []; }
   }
   if (sql.includes("SELECT * FROM Product WHERE")) {
-    const products = await db.product.findMany({ where: { isActive: true }, orderBy: { createdAt: "desc" }, include: { category: true }, take: 50 });
+    const allProducts = sql.includes("1=1");
+    const products = await db.product.findMany({ where: allProducts ? {} : { isActive: true }, orderBy: { createdAt: "desc" }, include: { category: true }, take: 50 });
     return products.map(p => ({ ...p, categoryName: p.category?.name, categorySlug: p.category?.slug }));
   }
   if (sql.includes("SELECT * FROM Category")) return db.category.findMany();

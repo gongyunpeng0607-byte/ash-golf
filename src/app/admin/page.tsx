@@ -33,20 +33,22 @@ export default async function AdminDashboard() {
           <h2 className="text-sm font-bold tracking-tight">近期訂單</h2>
           <Link href="/admin/orders" className="flex items-center gap-1 text-[10px] tracking-wider uppercase text-ash-gray-400 hover:text-ash-black"><ArrowRight className="h-3 w-3"/></Link>
         </div>
-        <table className="w-full">
-          <thead><tr className="border-b border-ash-gray-50"><th className="text-left px-6 py-3 text-[10px] tracking-[0.12em] uppercase text-ash-gray-400 font-medium">訂單編號</th><th className="text-left px-6 py-3 text-[10px] tracking-[0.12em] uppercase text-ash-gray-400 font-medium">客戶</th><th className="text-left px-6 py-3 text-[10px] tracking-[0.12em] uppercase text-ash-gray-400 font-medium">金額</th><th className="text-left px-6 py-3 text-[10px] tracking-[0.12em] uppercase text-ash-gray-400 font-medium">狀態</th><th className="text-right px-6 py-3 text-[10px] tracking-[0.12em] uppercase text-ash-gray-400 font-medium">日期</th></tr></thead>
-          <tbody>
-            {recentOrders.map((o: any) => (
-              <tr key={o.id} className="border-b border-ash-gray-50 hover:bg-ash-gray-50/50 transition-colors">
-                <td className="px-6 py-4 text-[13px] font-mono font-medium">{o.orderNo}</td><td className="px-6 py-4 text-[13px]">{o.recipientName}</td>
-                <td className="px-6 py-4 text-[13px] font-bold">{formatTWD(Number(o.totalAmount))}</td>
-                <td className="px-6 py-4"><span className={`px-2.5 py-0.5 text-[10px] tracking-wider uppercase font-medium rounded-full ${o.status==="paid"||o.status==="delivered"?"bg-green-50 text-green-700":o.status==="cancelled"?"bg-red-50 text-red-600":"bg-ash-gray-100 text-ash-gray-600"}`}>{o.status}</span></td>
-                <td className="px-6 py-4 text-[12px] text-ash-gray-400 text-right">{new Date(o.createdAt as string).toLocaleDateString("zh-TW")}</td>
-              </tr>
-            ))}
-            {recentOrders.length===0 && <tr><td colSpan={5} className="px-6 py-16 text-center text-[13px] text-ash-gray-300">尚無訂單</td></tr>}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[600px]">
+            <thead><tr className="border-b border-ash-gray-50"><th className="text-left px-6 py-3 text-[10px] tracking-[0.12em] uppercase text-ash-gray-400 font-medium">訂單編號</th><th className="text-left px-6 py-3 text-[10px] tracking-[0.12em] uppercase text-ash-gray-400 font-medium">客戶</th><th className="text-left px-6 py-3 text-[10px] tracking-[0.12em] uppercase text-ash-gray-400 font-medium">金額</th><th className="text-left px-6 py-3 text-[10px] tracking-[0.12em] uppercase text-ash-gray-400 font-medium">狀態</th><th className="text-right px-6 py-3 text-[10px] tracking-[0.12em] uppercase text-ash-gray-400 font-medium">日期</th></tr></thead>
+            <tbody>
+              {recentOrders.map((o: any) => (
+                <tr key={o.id} className="border-b border-ash-gray-50 hover:bg-ash-gray-50/50 transition-colors">
+                  <td className="px-6 py-4 text-[13px] font-mono font-medium">{o.orderNo}</td><td className="px-6 py-4 text-[13px]">{o.recipientName}</td>
+                  <td className="px-6 py-4 text-[13px] font-bold">{formatTWD(Number(o.totalAmount))}</td>
+                  <td className="px-6 py-4"><span className={`px-2.5 py-0.5 text-[10px] tracking-wider uppercase font-medium rounded-full ${o.status==="paid"||o.status==="delivered"?"bg-green-50 text-green-700":o.status==="cancelled"?"bg-red-50 text-red-600":"bg-ash-gray-100 text-ash-gray-600"}`}>{o.status}</span></td>
+                  <td className="px-6 py-4 text-[12px] text-ash-gray-400 text-right">{new Date(o.createdAt as string).toLocaleDateString("zh-TW")}</td>
+                </tr>
+              ))}
+              {recentOrders.length===0 && <tr><td colSpan={5} className="px-6 py-16 text-center text-[13px] text-ash-gray-300">尚無訂單</td></tr>}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

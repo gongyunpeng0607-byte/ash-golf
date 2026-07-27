@@ -216,7 +216,8 @@ export default function AdminOrdersPage() {
 
       {/* 表格 */}
       <div className="bg-white border border-ash-gray-50 rounded-lg overflow-hidden">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px]">
           <thead>
             <tr className="border-b border-ash-gray-50 bg-ash-gray-50/50">
               <th className="text-left px-4 py-3.5 text-[10px] tracking-[0.12em] uppercase text-ash-gray-400 font-medium">訂單編號</th>
@@ -268,6 +269,7 @@ export default function AdminOrdersPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
     </div>
