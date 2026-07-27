@@ -32,8 +32,8 @@ export function Header() {
       {/* Top bar */}
       <div className="bg-ash-black text-white text-[10px] tracking-[0.2em] uppercase py-2 text-center overflow-hidden">
         <motion.div animate={{ x: ["0%", "-50%"] }} transition={{ duration: 24, repeat: Infinity, ease: "linear" }} className="whitespace-nowrap inline-flex gap-24">
-          <span>免運 · 滿 NT$3,000</span><span>貨到付款</span><span>正品保證</span><span>LINE gyp2006</span>
-          <span>免運 · 滿 NT$3,000</span><span>貨到付款</span><span>正品保證</span><span>LINE gyp2006</span>
+          <span>免運 · 滿 NT$3,000</span><span>貨到付款</span><span>正品保證</span><span>LINE gyp</span>
+          <span>免運 · 滿 NT$3,000</span><span>貨到付款</span><span>正品保證</span><span>LINE gyp</span>
         </motion.div>
       </div>
 
