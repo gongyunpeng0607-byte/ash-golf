@@ -3,9 +3,13 @@ export const revalidate = 0;
 import Link from "next/link";
 import { getProducts, getOrders } from "@/lib/turso-db";
 import { formatTWD } from "@/lib/format";
+import { auth } from "@/auth";
 import { Box, ShoppingBag, TrendingUp, Plus, ArrowRight } from "lucide-react";
 
 export default async function AdminDashboard() {
+  const session = await auth();
+  const isSuperAdmin = (session?.user as any)?.role === "superadmin";
+
   const [{ total: productCount }, { orders, total: orderCount }] = await Promise.all([
     getProducts({ where: "isActive = 1", take: 0 }),
     getOrders(),
@@ -14,14 +18,22 @@ export default async function AdminDashboard() {
   const totalRevenue = orders.reduce((sum: number, o: any) => o.status !== "cancelled" ? sum + Number(o.totalAmount) : sum, 0);
   const recentOrders = orders.slice(0, 5);
 
+  const stats = [
+    { label: "商品總數", value: productCount, icon: Box, color: "bg-ash-black" },
+    { label: "訂單總數", value: orderCount, icon: ShoppingBag, color: "bg-ash-gray-800" },
+    ...(isSuperAdmin
+      ? [{ label: "累計營收", value: formatTWD(totalRevenue), icon: TrendingUp, color: "bg-ash-gray-600" }]
+      : []),
+  ];
+
   return (
     <div>
       <div className="flex items-center justify-between mb-10">
         <div><h1 className="text-[22px] font-bold tracking-tight">儀表板</h1><p className="text-[13px] text-ash-gray-400 mt-0.5">總覽您的商城數據</p></div>
         <Link href="/admin/products/new" className="flex items-center gap-2 bg-ash-black text-white text-[11px] tracking-wider uppercase px-5 py-2.5 font-medium hover:bg-ash-gray-800 transition-all active:scale-[0.98]"><Plus className="h-3.5 w-3.5"/> 新增商品</Link>
       </div>
-      <div className="grid sm:grid-cols-3 gap-4 mb-10">
-        {[{label:"商品總數",value:productCount,icon:Box,color:"bg-ash-black"},{label:"訂單總數",value:orderCount,icon:ShoppingBag,color:"bg-ash-gray-800"},{label:"累計營收",value:formatTWD(totalRevenue),icon:TrendingUp,color:"bg-ash-gray-600"}].map(c => (
+      <div className={`grid gap-4 mb-10 ${stats.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
+        {stats.map(c => (
           <div key={c.label} className="bg-white border border-ash-gray-50 p-6 rounded-lg hover:shadow-sm transition-shadow duration-300">
             <div className={`${c.color} w-10 h-10 flex items-center justify-center rounded-lg mb-4`}><c.icon className="h-4 w-4 text-white"/></div>
             <p className="text-[10px] tracking-[0.15em] uppercase text-ash-gray-400 font-medium">{c.label}</p><p className="text-2xl font-bold mt-1 tracking-tight">{c.value}</p>

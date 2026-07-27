@@ -161,22 +161,23 @@ export async function getAdminUser(username: string): Promise<any> {
 export async function listAdminUsers(): Promise<any[]> {
   if (isLocalDev) {
     const { db } = await import("./db");
-    return db.adminUser.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, username: true, name: true, createdAt: true } });
+    return db.adminUser.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, username: true, name: true, role: true, createdAt: true } });
   }
-  return query("SELECT id, username, name, createdAt FROM AdminUser ORDER BY createdAt DESC");
+  return query("SELECT id, username, name, role, createdAt FROM AdminUser ORDER BY createdAt DESC");
 }
 
-export async function createAdminUser(data: { username: string; password: string; name?: string }): Promise<any> {
+export async function createAdminUser(data: { username: string; password: string; name?: string; role?: string }): Promise<any> {
   const id = crypto.randomUUID();
   const now = new Date().toISOString().replace("T", " ").slice(0, 19);
   const s = (v: string) => v.replace(/'/g, "''");
+  const role = data.role || "admin";
   if (isLocalDev) {
     const { db } = await import("./db");
-    return db.adminUser.create({ data: { id, ...data } });
+    return db.adminUser.create({ data: { id, ...data, role: data.role || "admin" } });
   }
-  const sql = `INSERT INTO AdminUser(id,username,password,name,createdAt) VALUES('${id}','${s(data.username)}','${s(data.password)}','${data.name ? s(data.name) : "NULL"}','${now}')`;
+  const sql = `INSERT INTO AdminUser(id,username,password,name,role,createdAt) VALUES('${id}','${s(data.username)}','${s(data.password)}','${data.name ? s(data.name) : "NULL"}','${role}','${now}')`;
   await query(sql);
-  return { id, username: data.username, name: data.name };
+  return { id, username: data.username, name: data.name, role };
 }
 
 export async function updateAdminUserPassword(id: string, hashedPassword: string): Promise<void> {

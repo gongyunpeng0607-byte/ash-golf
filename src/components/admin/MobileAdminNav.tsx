@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   Box,
@@ -14,10 +15,13 @@ import {
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
-const links = [
+const baseLinks = [
   { href: "/admin", label: "儀表板", icon: LayoutDashboard },
   { href: "/admin/products", label: "商品管理", icon: Box },
   { href: "/admin/orders", label: "訂單管理", icon: ShoppingBag },
+];
+
+const superAdminLinks = [
   { href: "/admin/users", label: "帳號管理", icon: Users },
 ];
 
@@ -29,6 +33,12 @@ export function MobileAdminNav({
   onClose: () => void;
 }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const isSuperAdmin = (session?.user as any)?.role === "superadmin";
+
+  const links = isSuperAdmin
+    ? [...baseLinks, ...superAdminLinks]
+    : baseLinks;
 
   return (
     <AnimatePresence>

@@ -142,5 +142,6 @@ model AdminUser {
   username  String   @unique
   password  String
   name      String?
+  role      String   @default("admin")
   createdAt DateTime @default(now())
 }

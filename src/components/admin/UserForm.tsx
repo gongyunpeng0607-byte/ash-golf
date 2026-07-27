@@ -13,6 +13,7 @@ interface UserFormProps {
 
 export function UserForm({ mode, userId, onDone, onClose }: UserFormProps) {
   const [username, setUsername] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -43,7 +44,11 @@ export function UserForm({ mode, userId, onDone, onClose }: UserFormProps) {
         const res = await fetch("/api/admin/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: username.trim(), password }),
+          body: JSON.stringify({
+            username: username.trim(),
+            password,
+            name: displayName.trim() || undefined,
+          }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "建立失敗");
@@ -100,19 +105,34 @@ export function UserForm({ mode, userId, onDone, onClose }: UserFormProps) {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "create" && (
-              <div className="space-y-1.5">
-                <label className="text-[10px] tracking-[0.15em] uppercase text-ash-gray-400 font-medium">
-                  帳號
-                </label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="輸入帳號"
-                  required
-                  className="w-full border border-ash-gray-200 px-3 py-2.5 text-sm outline-none focus:border-ash-black transition-colors"
-                />
-              </div>
+              <>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] tracking-[0.15em] uppercase text-ash-gray-400 font-medium">
+                    帳號
+                  </label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="輸入帳號"
+                    required
+                    className="w-full border border-ash-gray-200 px-3 py-2.5 text-sm outline-none focus:border-ash-black transition-colors"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] tracking-[0.15em] uppercase text-ash-gray-400 font-medium">
+                    使用人姓名
+                  </label>
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="輸入使用人姓名（選填）"
+                    className="w-full border border-ash-gray-200 px-3 py-2.5 text-sm outline-none focus:border-ash-black transition-colors"
+                  />
+                </div>
+              </>
             )}
 
             <div className="space-y-1.5">

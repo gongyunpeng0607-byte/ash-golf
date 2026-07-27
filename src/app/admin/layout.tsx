@@ -25,11 +25,15 @@ export default function AdminLayout({
   const { data: session } = useSession();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
+  const isSuperAdmin = (session?.user as any)?.role === "superadmin";
+
   const links = [
     { href: "/admin", label: "儀表板", icon: LayoutDashboard },
     { href: "/admin/products", label: "商品管理", icon: Package },
     { href: "/admin/orders", label: "訂單管理", icon: ShoppingBag },
-    { href: "/admin/users", label: "帳號管理", icon: Users },
+    ...(isSuperAdmin
+      ? [{ href: "/admin/users", label: "帳號管理", icon: Users }]
+      : []),
   ];
 
   return (

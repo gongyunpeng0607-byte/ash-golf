@@ -5,7 +5,7 @@ import { hashPassword } from "@/lib/password";
 
 export const dynamic = "force-dynamic";
 
-// GET — list all admin users
+// GET — list all admin users (any logged-in admin can view)
 export async function GET() {
   const session = await auth();
   if (!session?.user) {
@@ -20,11 +20,16 @@ export async function GET() {
   }
 }
 
-// POST — create new admin user
+// POST — create new admin user (superadmin only)
 export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userRole = (session.user as any).role;
+  if (userRole !== "superadmin") {
+    return NextResponse.json({ error: "權限不足" }, { status: 403 });
   }
 
   try {
@@ -57,10 +62,11 @@ export async function POST(request: NextRequest) {
       username: username.trim(),
       password: hashed,
       name: name?.trim() || undefined,
+      role: "admin",
     });
 
     return NextResponse.json(
-      { user: { id: user.id, username: user.username, name: user.name } },
+      { user: { id: user.id, username: user.username, name: user.name, role: user.role } },
       { status: 201 },
     );
   } catch (e: any) {
