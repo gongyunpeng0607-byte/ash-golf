@@ -33,9 +33,9 @@ export default function AdminLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-[#f5f4f0] flex">
+    <div className="h-screen overflow-hidden bg-[#f5f4f0] flex">
       {/* Sidebar - desktop only */}
-      <aside className="w-[200px] bg-white border-r border-ash-gray-100 shrink-0 hidden md:flex flex-col">
+      <aside className="w-[200px] bg-white border-r border-ash-gray-100 shrink-0 hidden md:flex flex-col h-screen sticky top-0">
         <div className="px-6 py-7">
           <Link
             href="/admin"
@@ -109,7 +109,7 @@ export default function AdminLayout({
       </div>
 
       {/* Main content */}
-      <div className="flex-1 p-4 md:p-8 pt-16 md:pt-8 max-w-[1200px] min-w-0">
+      <div className="flex-1 p-4 md:p-8 pt-16 md:pt-8 max-w-[1200px] min-w-0 overflow-y-auto h-screen">
         {children}
       </div>
 
