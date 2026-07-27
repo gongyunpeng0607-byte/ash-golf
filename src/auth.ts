@@ -10,17 +10,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "密碼", type: "password" },
       },
       authorize: async (credentials) => {
+        // 优先读环境变量，未设定则用默认值
         const ADMIN_USER = process.env.ADMIN_USER || "admin";
-        const ADMIN_PASS = process.env.ADMIN_PASS;
-        if (!ADMIN_PASS) {
-          throw new Error("ADMIN_PASS 環境變數未設定");
-        }
-        if (
-          credentials.username === ADMIN_USER &&
-          credentials.password === ADMIN_PASS
-        ) {
+        const ADMIN_PASS = process.env.ADMIN_PASS || "ashgolf2024";
+
+        const u = String(credentials?.username ?? "").trim();
+        const p = String(credentials?.password ?? "");
+
+        if (u === ADMIN_USER && p === ADMIN_PASS) {
           return { id: "admin-1", name: "Admin" };
         }
+
         return null;
       },
     }),
@@ -37,6 +37,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (session.user as any).role = token.role;
       }
       return session;
+    },
+  },
+  logger: {
+    error(error) {
+      console.error("[Auth Error]", error.message || error);
     },
   },
 });

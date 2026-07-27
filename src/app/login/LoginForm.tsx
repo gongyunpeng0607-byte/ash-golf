@@ -29,12 +29,18 @@ export function LoginForm() {
       });
 
       if (result?.error) {
-        setError("帳號或密碼錯誤，請重試");
+        if (result.error === "CredentialsSignin") {
+          setError("帳號或密碼錯誤，請重試");
+        } else if (result.error === "Configuration") {
+          setError("伺服器設定錯誤，請聯繫管理員");
+        } else {
+          setError(`登入失敗：${result.error}`);
+        }
       } else {
         router.push(callbackUrl);
         router.refresh();
       }
-    } catch {
+    } catch (err: any) {
       setError("登入失敗，請稍後再試");
     } finally {
       setLoading(false);
