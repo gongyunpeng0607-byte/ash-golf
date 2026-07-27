@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { X, Plus, Key } from "lucide-react";
 
 interface UserFormProps {
@@ -12,16 +12,14 @@ interface UserFormProps {
 }
 
 export function UserForm({ mode, userId, onDone, onClose }: UserFormProps) {
-  const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const title =
-    mode === "create" ? "新增帳號" : "修改密碼";
-  const btnLabel =
-    mode === "create" ? "建立帳號" : "更新密碼";
+  const title = mode === "create" ? "新增帳號" : "修改密碼";
+  const btnLabel = mode === "create" ? "建立帳號" : "更新密碼";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +28,11 @@ export function UserForm({ mode, userId, onDone, onClose }: UserFormProps) {
 
     try {
       if (mode === "create") {
+        if (!displayName.trim()) {
+          setError("請輸入使用人姓名");
+          setLoading(false);
+          return;
+        }
         if (!username.trim() || username.trim().length < 2) {
           setError("帳號至少需要 2 個字元");
           setLoading(false);
@@ -47,7 +50,7 @@ export function UserForm({ mode, userId, onDone, onClose }: UserFormProps) {
           body: JSON.stringify({
             username: username.trim(),
             password,
-            name: displayName.trim() || undefined,
+            name: displayName.trim(),
           }),
         });
         const data = await res.json();
@@ -77,7 +80,7 @@ export function UserForm({ mode, userId, onDone, onClose }: UserFormProps) {
   };
 
   return (
-    <AnimatePresence>
+    <>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -86,40 +89,28 @@ export function UserForm({ mode, userId, onDone, onClose }: UserFormProps) {
         onClick={onClose}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+          initial={{ opacity: 0, scale: 0.94, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          transition={{ duration: 0.2 }}
-          className="bg-white w-full max-w-sm p-8"
+          exit={{ opacity: 0, scale: 0.94, y: 16 }}
+          transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+          className="bg-white w-full max-w-sm rounded-xl shadow-2xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between mb-6">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-5 border-b border-ash-gray-100 bg-ash-gray-50/50">
             <h2 className="text-sm font-bold tracking-tight">{title}</h2>
             <button
               onClick={onClose}
-              className="p-1 hover:bg-ash-gray-100 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-ash-gray-200 rounded-lg transition-colors"
             >
               <X className="h-4 w-4 text-ash-gray-400" />
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
             {mode === "create" && (
               <>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] tracking-[0.15em] uppercase text-ash-gray-400 font-medium">
-                    帳號
-                  </label>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="輸入帳號"
-                    required
-                    className="w-full border border-ash-gray-200 px-3 py-2.5 text-sm outline-none focus:border-ash-black transition-colors"
-                  />
-                </div>
-
+                {/* Name first — as requested */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] tracking-[0.15em] uppercase text-ash-gray-400 font-medium">
                     使用人姓名
@@ -128,8 +119,24 @@ export function UserForm({ mode, userId, onDone, onClose }: UserFormProps) {
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="輸入使用人姓名（選填）"
-                    className="w-full border border-ash-gray-200 px-3 py-2.5 text-sm outline-none focus:border-ash-black transition-colors"
+                    placeholder="輸入使用人姓名"
+                    required
+                    autoFocus
+                    className="w-full border border-ash-gray-200 px-3 py-2.5 text-sm outline-none focus:border-ash-black transition-colors rounded-lg"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] tracking-[0.15em] uppercase text-ash-gray-400 font-medium">
+                    帳號
+                  </label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="輸入登入帳號"
+                    required
+                    className="w-full border border-ash-gray-200 px-3 py-2.5 text-sm outline-none focus:border-ash-black transition-colors rounded-lg"
                   />
                 </div>
               </>
@@ -145,15 +152,16 @@ export function UserForm({ mode, userId, onDone, onClose }: UserFormProps) {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={mode === "create" ? "輸入密碼（至少 6 位）" : "輸入新密碼（至少 6 位）"}
                 required
-                className="w-full border border-ash-gray-200 px-3 py-2.5 text-sm outline-none focus:border-ash-black transition-colors"
+                autoFocus={mode === "changePassword"}
+                className="w-full border border-ash-gray-200 px-3 py-2.5 text-sm outline-none focus:border-ash-black transition-colors rounded-lg"
               />
             </div>
 
             {error && (
               <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-[12px] text-red-600 bg-red-50 px-3 py-2"
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-[12px] text-red-600 bg-red-50 px-3 py-2 rounded-lg"
               >
                 {error}
               </motion.p>
@@ -162,18 +170,14 @@ export function UserForm({ mode, userId, onDone, onClose }: UserFormProps) {
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center justify-center gap-2 w-full bg-ash-black text-white text-xs tracking-[0.15em] uppercase py-3 font-bold hover:bg-ash-gray-800 transition-colors disabled:opacity-60"
+              className="flex items-center justify-center gap-2 w-full bg-ash-black text-white text-xs tracking-[0.15em] uppercase py-3 font-bold hover:bg-ash-gray-800 transition-colors disabled:opacity-60 rounded-lg"
             >
-              {mode === "create" ? (
-                <Plus className="h-3.5 w-3.5" />
-              ) : (
-                <Key className="h-3.5 w-3.5" />
-              )}
+              {mode === "create" ? <Plus className="h-3.5 w-3.5" /> : <Key className="h-3.5 w-3.5" />}
               {loading ? "處理中..." : btnLabel}
             </button>
           </form>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </>
   );
 }

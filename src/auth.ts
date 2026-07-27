@@ -4,7 +4,6 @@ import { getAdminUser, createAdminUser, countAdminUsers } from "@/lib/turso-db";
 import { verifyPassword, hashPassword } from "@/lib/password";
 
 async function seedSuperAdmin() {
-  // 确保超级管理员 gyp 始终存在于数据库
   try {
     const existing = await getAdminUser("gyp");
     if (!existing) {
@@ -14,11 +13,10 @@ async function seedSuperAdmin() {
         password: hashed,
         name: "GY",
         role: "superadmin",
+        permissions: ["products", "orders", "users"],
       });
     }
-  } catch {
-    // seed failed, not critical
-  }
+  } catch {}
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -35,34 +33,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!username || !password) return null;
 
-        // 确保超级管理员 gyp 始终存在
         try { await seedSuperAdmin(); } catch {}
 
-        // 1. Try database lookup
+        // 1. Database lookup
         try {
           const dbUser = await getAdminUser(username);
           if (dbUser) {
             const valid = await verifyPassword(password, dbUser.password);
             if (valid) {
-              const userRole = dbUser.role || "admin";
+              const perms = typeof dbUser.permissions === "string"
+                ? JSON.parse(dbUser.permissions || "[]")
+                : (dbUser.permissions || []);
               return {
                 id: dbUser.id,
                 name: dbUser.name || dbUser.username,
-                role: userRole,
+                role: dbUser.role || "admin",
+                permissions: perms,
               };
             }
             return null;
           }
-        } catch {
-          // DB query failed — fall through to env var
-        }
+        } catch {}
 
-        // 2. Fallback: env var credentials → superadmin
+        // 2. Fallback: env var
         const ADMIN_USER = process.env.ADMIN_USER || "admin";
         const ADMIN_PASS = process.env.ADMIN_PASS || "ashgolf2024";
 
         if (username === ADMIN_USER && password === ADMIN_PASS) {
-          // Auto-seed env user as superadmin if DB is empty
           try {
             const count = await countAdminUsers();
             if (count === 0) {
@@ -73,17 +70,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 password: hashed,
                 name: "Admin",
                 role: "superadmin",
+                permissions: ["products", "orders", "users"],
               });
               return {
                 id: created.id,
                 name: created.name || ADMIN_USER,
                 role: "superadmin",
+                permissions: ["products", "orders", "users"],
               };
             }
-          } catch {
-            // seeding failed, return env-based user
-          }
-          return { id: "admin-env", name: "Admin", role: "superadmin" };
+          } catch {}
+          return {
+            id: "admin-env", name: "Admin", role: "superadmin",
+            permissions: ["products", "orders", "users"],
+          };
         }
 
         return null;
@@ -98,6 +98,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id;
         token.name = user.name;
         token.role = (user as any).role || "admin";
+        token.permissions = (user as any).permissions || [];
       }
       return token;
     },
@@ -105,6 +106,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role || "admin";
+        (session.user as any).permissions = token.permissions || [];
       }
       return session;
     },

@@ -138,10 +138,11 @@ model OrderItem {
 }
 
 model AdminUser {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  password  String
-  name      String?
-  role      String   @default("admin")
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  username    String   @unique
+  password    String
+  name        String?
+  role        String   @default("admin")
+  permissions String   @default("[]")
+  createdAt   DateTime @default(now())
 }
