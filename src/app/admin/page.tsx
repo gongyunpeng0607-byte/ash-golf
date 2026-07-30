@@ -10,10 +10,15 @@ export default async function AdminDashboard() {
   const session = await auth();
   const isSuperAdmin = (session?.user as any)?.role === "superadmin";
 
-  const [{ total: productCount }, { orders, total: orderCount }] = await Promise.all([
+  // 独立查询，一个失败不影响另一个
+  const [productsResult, ordersResult] = await Promise.allSettled([
     getProducts({ where: "isActive = 1", take: 0 }),
     getOrders(),
   ]);
+
+  const productCount = productsResult.status === "fulfilled" ? productsResult.value.total : 0;
+  const orderData = ordersResult.status === "fulfilled" ? ordersResult.value : { orders: [], total: 0 };
+  const { orders, total: orderCount } = orderData;
 
   const totalRevenue = orders.reduce((sum: number, o: any) => o.status !== "cancelled" ? sum + Number(o.totalAmount) : sum, 0);
   const recentOrders = orders.slice(0, 5);

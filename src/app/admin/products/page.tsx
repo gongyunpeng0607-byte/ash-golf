@@ -87,14 +87,9 @@ export default async function AdminProductsPage({
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-11 h-11 bg-ash-gray-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
-                        {/* Use thumbnail API instead of parsing base64 */}
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={`/api/products/${p.id}/thumb`}
-                          alt=""
-                          className="w-full h-full object-contain"
-                          loading="lazy"
-                        />
+                        <span className="text-[10px] font-bold text-ash-gray-400 uppercase">
+                          {(p.name || "?").charAt(0)}
+                        </span>
                       </div>
                       <div>
                         <p className="text-[13px] font-medium truncate max-w-[200px]">
