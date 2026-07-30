@@ -19,7 +19,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CategoryPage({ params }: Props) {
   const { slug } = await params;
   const category = await getCategoryBySlug(slug) as any;
-  if (!category) notFound();
+
+  if (!category) {
+    return (
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-10 py-20 text-center">
+        <p className="text-6xl mb-6">📭</p>
+        <h1 className="text-xl font-bold mb-2">此分類暫無內容</h1>
+        <p className="text-sm text-ash-gray-400 mb-8">該分類尚無商品，請稍後再回來查看</p>
+        <Link href="/products" className="inline-flex items-center gap-2 bg-ash-black text-white text-xs tracking-wider uppercase px-6 py-3 font-medium hover:bg-ash-gray-800 transition-colors">
+          瀏覽全部商品
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[1440px] mx-auto px-6 lg:px-10 py-10">
