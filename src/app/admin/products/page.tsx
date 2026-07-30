@@ -10,6 +10,20 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 20;
 
+function firstImage(images: string): string | null {
+  if (!images || images === "[]" || images.length < 20) return null;
+  try {
+    const arr = JSON.parse(images);
+    if (Array.isArray(arr) && arr.length > 0 && typeof arr[0] === "string") {
+      const img = arr[0];
+      // 只取短图片数据（base64 <2KB 或短 SVG），太大的跳过避免 HTML 膨胀
+      if (img.startsWith("data:image") && img.length > 6000) return null;
+      return img;
+    }
+  } catch {}
+  return null;
+}
+
 export default async function AdminProductsPage({
   searchParams,
 }: {
@@ -79,7 +93,9 @@ export default async function AdminProductsPage({
               </tr>
             </thead>
             <tbody>
-              {products.map((p: any) => (
+              {products.map((p: any) => {
+                const img = firstImage(p.images || "[]");
+                return (
                 <tr
                   key={p.id}
                   className="border-b border-ash-gray-50 hover:bg-ash-gray-50/50 transition-colors"
@@ -87,9 +103,14 @@ export default async function AdminProductsPage({
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-11 h-11 bg-ash-gray-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
-                        <span className="text-[10px] font-bold text-ash-gray-400 uppercase">
-                          {(p.name || "?").charAt(0)}
-                        </span>
+                        {img ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={img} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-[10px] font-bold text-ash-gray-400 uppercase">
+                            {(p.name || "?").charAt(0)}
+                          </span>
+                        )}
                       </div>
                       <div>
                         <p className="text-[13px] font-medium truncate max-w-[200px]">
@@ -139,7 +160,8 @@ export default async function AdminProductsPage({
                     </div>
                   </td>
                 </tr>
-              ))}
+              );
+              })}
               {products.length === 0 && (
                 <tr>
                   <td
