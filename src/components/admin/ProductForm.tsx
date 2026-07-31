@@ -10,6 +10,7 @@ interface ProductFormProps { categories: Category[]; product?: Product | null; }
 
 const F = "w-full bg-gray-50 border-0 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-ash-black/10 focus:bg-white transition-all rounded-lg";
 const L = "block text-[11px] tracking-[0.08em] text-ash-gray-500 mb-1.5 font-medium";
+const SEL = "w-full bg-gray-50 border-0 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-ash-black/10 focus:bg-white transition-all rounded-lg cursor-pointer appearance-none bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23888%22 stroke-width=%222%22><path d=%22M6 9l6 6 6-6%22/></svg>')] bg-no-repeat bg-[right_12px_center] pr-10";
 
 export function ProductForm({ categories, product }: ProductFormProps) {
   const router = useRouter();
@@ -69,7 +70,16 @@ export function ProductForm({ categories, product }: ProductFormProps) {
       <div className="bg-white border border-ash-gray-50 rounded-xl p-6 lg:p-8">
         <h2 className="text-xs tracking-[0.15em] uppercase font-bold mb-6 flex items-center gap-2"><span className="w-1 h-4 bg-ash-black" /> 分類與品牌</h2>
         <div className="grid sm:grid-cols-3 gap-5">
-          <div><label className={L}>分類 *</label><select required className={F} value={form.categoryId} onChange={e => update("categoryId", e.target.value)}>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+          <div><label className={L}>分類 *</label>
+            {categories.length > 0 ? (
+              <select required className={SEL} value={form.categoryId} onChange={e => update("categoryId", e.target.value)}>
+                <option value="" disabled>選擇分類</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            ) : (
+              <p className="text-[12px] text-amber-600 bg-amber-50 px-3 py-2.5 rounded-lg">尚無分類，請先在資料庫建立分類</p>
+            )}
+          </div>
           <div><label className={L}>品牌</label><input className={F} value={form.brand} onChange={e => update("brand", e.target.value)} placeholder="TAYLORMADE" /></div>
           <div><label className={L}>規格 JSON</label><input className={F} value={form.specs} onChange={e => update("specs", e.target.value)} placeholder='{"桿面":"9.0°"}' /></div>
         </div>
