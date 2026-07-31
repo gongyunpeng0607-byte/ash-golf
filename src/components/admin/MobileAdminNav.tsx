@@ -12,6 +12,7 @@ import {
   LogOut,
   Home,
   Users,
+  Truck,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -19,6 +20,7 @@ const baseLinks = [
   { href: "/admin", label: "儀表板", icon: LayoutDashboard },
   { href: "/admin/products", label: "商品管理", icon: Box },
   { href: "/admin/orders", label: "訂單管理", icon: ShoppingBag },
+  { href: "/admin/shipments", label: "發貨管理", icon: Truck },
 ];
 
 const superAdminLinks = [

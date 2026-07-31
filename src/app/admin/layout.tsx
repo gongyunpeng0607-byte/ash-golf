@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Menu,
   Users,
+  Truck,
 } from "lucide-react";
 import { MobileAdminNav } from "@/components/admin/MobileAdminNav";
 
@@ -31,6 +32,7 @@ export default function AdminLayout({
     { href: "/admin", label: "儀表板", icon: LayoutDashboard },
     { href: "/admin/products", label: "商品管理", icon: Package },
     { href: "/admin/orders", label: "訂單管理", icon: ShoppingBag },
+    { href: "/admin/shipments", label: "發貨管理", icon: Truck },
     ...(isSuperAdmin
       ? [{ href: "/admin/users", label: "帳號管理", icon: Users }]
       : []),

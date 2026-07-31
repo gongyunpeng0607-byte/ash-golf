@@ -123,6 +123,13 @@ model Order {
   paymentStatus   String      @default("unpaid")
   note            String?
   items           OrderItem[]
+  // 发货追踪 (代购模式)
+  purchaseStatus  String      @default("")
+  itemCount       Int         @default(0)
+  arrivedCount    Int         @default(0)
+  purchaseOrderNo String      @default("")
+  trackingNo      String      @default("")
+  isDropship      Boolean     @default(false)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 }

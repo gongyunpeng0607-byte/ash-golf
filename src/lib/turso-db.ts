@@ -145,6 +145,50 @@ export async function getOrderById(id: string): Promise<any> {
 
 export function clearCache() { CACHE.clear(); }
 
+// ============ Shipments ============
+
+export async function getShipmentOrders(): Promise<any[]> {
+  if (isLocalDev) {
+    const { db } = await import("./db");
+    const orders = await db.order.findMany({
+      where: { isDropship: true },
+      orderBy: { createdAt: "desc" },
+      include: { items: { include: { product: true } } },
+      take: 200,
+    });
+    return orders;
+  }
+  return query(`SELECT * FROM "Order" WHERE isDropship = 1 ORDER BY createdAt DESC LIMIT 200`);
+}
+
+export async function updateShipmentStatus(
+  id: string,
+  data: {
+    purchaseStatus?: string;
+    arrivedCount?: number;
+    itemCount?: number;
+    purchaseOrderNo?: string;
+    trackingNo?: string;
+    isDropship?: boolean;
+  },
+): Promise<void> {
+  if (isLocalDev) {
+    const { db } = await import("./db");
+    await db.order.update({ where: { id }, data });
+    return;
+  }
+  const s = (v: string) => v.replace(/'/g, "''");
+  const sets: string[] = [];
+  if (data.purchaseStatus !== undefined) sets.push(`purchaseStatus = '${s(data.purchaseStatus)}'`);
+  if (data.arrivedCount !== undefined) sets.push(`arrivedCount = ${data.arrivedCount}`);
+  if (data.itemCount !== undefined) sets.push(`itemCount = ${data.itemCount}`);
+  if (data.purchaseOrderNo !== undefined) sets.push(`purchaseOrderNo = '${s(data.purchaseOrderNo)}'`);
+  if (data.trackingNo !== undefined) sets.push(`trackingNo = '${s(data.trackingNo)}'`);
+  if (data.isDropship !== undefined) sets.push(`isDropship = ${data.isDropship ? 1 : 0}`);
+  if (sets.length === 0) return;
+  await query(`UPDATE "Order" SET ${sets.join(", ")} WHERE id = '${id}'`);
+}
+
 // ============ AdminUser ============
 
 function safeParsePermissions(raw: any): string[] {
