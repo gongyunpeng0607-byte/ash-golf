@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Save, ArrowLeft } from "lucide-react";
 import { ImageUpload } from "./ImageUpload";
+import { slugify } from "@/lib/format";
 import type { Category, Product } from "@/types";
 
 interface ProductFormProps { categories: Category[]; product?: Product | null; }
@@ -17,6 +18,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
   const isEdit = !!product;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const slugManuallyEdited = useRef(false);
 
   const [form, setForm] = useState({
     name: product?.name || "", slug: product?.slug || "", description: product?.description || "",
@@ -27,7 +29,17 @@ export function ProductForm({ categories, product }: ProductFormProps) {
     brand: product?.brand || "", tags: product?.tags || "[]",
   });
 
-  const update = (f: string, v: string | boolean) => setForm(prev => ({ ...prev, [f]: v }));
+  const update = (f: string, v: string | boolean) => {
+    // Auto-generate slug from name on new products (unless slug was manually edited)
+    if (!isEdit && f === "name" && !slugManuallyEdited.current) {
+      setForm(prev => ({ ...prev, name: v as string, slug: slugify(v as string) }));
+      return;
+    }
+    if (f === "slug" && !isEdit) {
+      slugManuallyEdited.current = true;
+    }
+    setForm(prev => ({ ...prev, [f]: v }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setError(""); setSaving(true);

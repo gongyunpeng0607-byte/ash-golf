@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProducts, getCategories, clearCache } from "@/lib/turso-db";
 import { uuid } from "@/lib/uuid";
+import { revalidateProductCache } from "@/lib/revalidate";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +86,14 @@ export async function POST(request: NextRequest) {
     const s = (v: any) => String(v ?? "").replace(/'/g, "''");
     const q = (v: any) => (v != null && String(v).trim()) ? `'${s(v)}'` : "NULL";
 
+    // 验证 slug 格式：只允许小写字母、数字、连字符、下划线
+    if (body.slug && !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(body.slug)) {
+      return NextResponse.json({
+        success: false,
+        error: "Slug 格式無效：只能使用小寫英文、數字和連字符（如 taylormade-stealth-2）",
+      }, { status: 400 });
+    }
+
     // 检查 slug 是否已存在
     const slugCount = await tursoCount(`SELECT count(*) FROM Product WHERE slug = '${s(body.slug)}'`);
     if (slugCount > 0) {
@@ -127,7 +136,12 @@ export async function POST(request: NextRequest) {
       await tursoWrite(`UPDATE Product SET images = '${s(images)}' WHERE id = '${id}'`);
     }
 
-    clearCache(); // 新建商品后清除缓存
+    clearCache(); // 新建商品后清除内存缓存
+    // 刷新 ISR 页面缓存（首页/列表页/所属分类页）
+    const catSlug = body.categoryId
+      ? (await getCategories()).find((c: Record<string, unknown>) => c.id === body.categoryId)?.slug
+      : undefined;
+    await revalidateProductCache({ productSlug: body.slug, categorySlug: catSlug as string });
     return NextResponse.json({ success: true, product: { id, ...body } }, { status: 201 });
   } catch (e: any) {
     return NextResponse.json({ success: false, error: e.message }, { status: 500 });

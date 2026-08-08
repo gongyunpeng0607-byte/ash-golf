@@ -1,4 +1,4 @@
-export const revalidate = 3600;
+export const revalidate = 300;
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getCategoryBySlug } from "@/lib/turso-db";

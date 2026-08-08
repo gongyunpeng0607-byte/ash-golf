@@ -31,7 +31,9 @@ async function fetchTurso(stmts: any[]): Promise<any[]> {
 async function query(sql: string): Promise<any[]> {
   const results = await fetchTurso([sql]);
   const r = results[0];
-  if (r.type !== "ok") return [];
+  if (r.type !== "ok") {
+    throw new Error(`Turso query error: ${r.error?.message || "unknown"}`);
+  }
   const cols: string[] = r.response.result.cols.map((c: any) => c.name);
   return r.response.result.rows.map((row: any[]) => {
     const obj: any = {};
@@ -52,34 +54,80 @@ async function cachedQuery(sql: string, ttl: number): Promise<any[]> {
 
   // 本地开发
   if (isLocalDev) {
-    const result = await localQuery(sql);
-    if (ttl > 0) scache(sql, result, ttl);
-    return result;
+    try {
+      const result = await localQuery(sql);
+      if (ttl > 0) scache(sql, result, ttl);
+      return result;
+    } catch (e) {
+      console.error("[localQuery error]", (e as Error).message, sql.substring(0, 100));
+      return [];
+    }
   }
 
-  const rows = await query(sql).catch(() => [] as any[]);
-  if (ttl > 0) scache(sql, rows, ttl);
-  return rows;
+  try {
+    const rows = await query(sql);
+    if (ttl > 0) scache(sql, rows, ttl);
+    return rows;
+  } catch (e) {
+    console.error("[Turso query error]", (e as Error).message, sql.substring(0, 100));
+    // 关键修复：查询失败时不缓存空结果，避免一次故障导致 30 秒内所有请求都返回空
+    return [];
+  }
 }
 
 async function localQuery(sql: string): Promise<any[]> {
   const { db } = await import("./db");
   if (sql.includes("count(*)") && sql.includes("Product")) {
-    const allProducts = sql.includes("1=1");
-    const c = await db.product.count({ where: allProducts ? {} : { isActive: true } });
+    const where: any = {};
+    if (!sql.includes("1=1")) {
+      where.isActive = true;
+    }
+    if (sql.includes("isFeatured = 1")) where.isFeatured = true;
+    const catMatch = sql.match(/categoryId\s*=\s*'([^']+)'/);
+    if (catMatch) where.categoryId = catMatch[1];
+    const c = await db.product.count({ where });
     return [{ total: c }];
   }
   if (sql.includes("slug =") && sql.includes("Product p")) {
     const m = sql.match(/slug\s*=\s*'([^']+)'/);
-    if (m) { const p = await db.product.findUnique({ where: { slug: m[1] }, include: { category: true } }); return p ? [{ ...p, categoryName: p.category?.name, categorySlug: p.category?.slug }] : []; }
+    if (m) { const p = await db.product.findUnique({ where: { slug: m[1], isActive: true }, include: { category: true } }); return p ? [{ ...p, categoryName: p.category?.name, categorySlug: p.category?.slug }] : []; }
   }
   if (sql.includes("id =") && sql.includes("Product")) {
     const m = sql.match(/id\s*=\s*'([^']+)'/);
-    if (m) { const p = await db.product.findUnique({ where: { id: m[1] } }); return p ? [p] : []; }
+    if (m) { const p = await db.product.findUnique({ where: { id: m[1] }, include: { category: true } }); return p ? [{ ...p, categorySlug: p.category?.slug }] : []; }
   }
   if (sql.includes("SELECT * FROM Product WHERE")) {
-    const allProducts = sql.includes("1=1");
-    const products = await db.product.findMany({ where: allProducts ? {} : { isActive: true }, orderBy: { createdAt: "desc" }, include: { category: true }, take: 50 });
+    const where: any = {};
+    // 1=1 means admin wants all products (no filter)
+    if (!sql.includes("1=1")) {
+      where.isActive = true;
+    }
+    if (sql.includes("isFeatured = 1")) where.isFeatured = true;
+    const catMatch = sql.match(/categoryId\s*=\s*'([^']+)'/);
+    if (catMatch) where.categoryId = catMatch[1];
+    const searchMatch = sql.match(/(?:name|description|brand)\s+LIKE\s+'%([^']+)%'/g);
+    if (searchMatch) {
+      // For search queries, use Prisma OR filtering
+      const terms = searchMatch.map((m: string) => { const v = m.match(/'%([^']+)%'/); return v ? v[1] : ""; }).filter(Boolean);
+      if (terms.length > 0) {
+        where.OR = [
+          { name: { contains: terms[0] } },
+          { description: { contains: terms[0] } },
+          { brand: { contains: terms[0] } },
+        ];
+      }
+    }
+    // Parse ORDER BY
+    let orderBy: any = { createdAt: "desc" };
+    if (sql.includes("price ASC")) orderBy = { price: "asc" };
+    else if (sql.includes("price DESC")) orderBy = { price: "desc" };
+    else if (sql.includes("createdAt DESC")) orderBy = { createdAt: "desc" };
+    // Parse LIMIT and OFFSET
+    const limitMatch = sql.match(/LIMIT\s+(\d+)/i);
+    const offsetMatch = sql.match(/OFFSET\s+(\d+)/i);
+    const take = limitMatch ? parseInt(limitMatch[1]) : 50;
+    const skip = offsetMatch ? parseInt(offsetMatch[1]) : 0;
+    const products = await db.product.findMany({ where, orderBy, include: { category: true }, take, skip });
     return products.map(p => ({ ...p, categoryName: p.category?.name, categorySlug: p.category?.slug }));
   }
   if (sql.includes("SELECT * FROM Category")) return db.category.findMany();
@@ -102,7 +150,7 @@ export async function getProducts(opts: { where?: string; orderBy?: string; skip
 
 export async function getProductBySlug(slug: string): Promise<any> {
   const rows = await cachedQuery(
-    `SELECT p.*, c.name as categoryName, c.slug as categorySlug FROM Product p LEFT JOIN Category c ON p.categoryId = c.id WHERE p.slug = '${slug.replace(/'/g, "''")}'`,
+    `SELECT p.*, c.name as categoryName, c.slug as categorySlug FROM Product p LEFT JOIN Category c ON p.categoryId = c.id WHERE p.slug = '${slug.replace(/'/g, "''")}' AND p.isActive = 1`,
     30000
   );
   if (!rows[0]) return null;
@@ -110,7 +158,10 @@ export async function getProductBySlug(slug: string): Promise<any> {
 }
 
 export async function getProductById(id: string): Promise<any> {
-  const rows = await cachedQuery(`SELECT * FROM Product WHERE id = '${id}'`, 0);
+  const rows = await cachedQuery(
+    `SELECT p.*, c.slug as categorySlug FROM Product p LEFT JOIN Category c ON p.categoryId = c.id WHERE p.id = '${id}'`,
+    0
+  );
   return rows[0] || null;
 }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProductById, clearCache } from "@/lib/turso-db";
+import { revalidateProductCache } from "@/lib/revalidate";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +86,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     clearCache();
+    // 刷新 ISR 页面缓存
+    const fresh = await getProductById(id);
+    await revalidateProductCache({
+      productSlug: fresh?.slug as string,
+      categorySlug: fresh?.categorySlug as string,
+    });
     return NextResponse.json({ success: true });
   } catch (e: any) {
     return NextResponse.json({ success: false, error: e.message }, { status: 500 });
@@ -94,6 +101,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
+    // 先查 product 拿到 slug，用于 ISR revalidation
+    const product = await getProductById(id);
     const token = process.env.TURSO_AUTH_TOKEN;
     if (token) {
       await tursoWrite(`DELETE FROM OrderItem WHERE productId='${id}'`);
@@ -101,10 +110,18 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
       const res = await tursoWrite(`DELETE FROM Product WHERE id='${id}'`);
       if (!res.ok) return NextResponse.json({ success: false, error: "刪除失敗" }, { status: 500 });
       clearCache();
+      await revalidateProductCache({
+        productSlug: product?.slug as string,
+        categorySlug: product?.categorySlug as string,
+      });
       return NextResponse.json({ success: true });
     }
     const { db } = await import("@/lib/db");
     await db.product.delete({ where: { id } });
+    await revalidateProductCache({
+      productSlug: product?.slug as string,
+      categorySlug: product?.categorySlug as string,
+    });
     return NextResponse.json({ success: true });
   } catch (e: any) {
     return NextResponse.json({ success: false, error: e.message }, { status: 500 });
