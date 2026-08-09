@@ -32,7 +32,8 @@ export function ProductForm({ categories, product }: ProductFormProps) {
   const update = (f: string, v: string | boolean) => {
     // Auto-generate slug from name on new products (unless slug was manually edited)
     if (!isEdit && f === "name" && !slugManuallyEdited.current) {
-      setForm(prev => ({ ...prev, name: v as string, slug: slugify(v as string) }));
+      const autoSlug = slugify(v as string) || "product-" + Math.random().toString(36).slice(2, 8);
+      setForm(prev => ({ ...prev, name: v as string, slug: autoSlug }));
       return;
     }
     if (f === "slug" && !isEdit) {

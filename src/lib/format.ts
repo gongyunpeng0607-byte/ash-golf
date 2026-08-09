@@ -53,5 +53,6 @@ export function slugify(text: string): string {
     .trim()
     .replace(/\s+/g, "-")
     .replace(/[^\w-]+/g, "")
-    .replace(/--+/g, "-");
+    .replace(/--+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
