@@ -100,9 +100,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "此網址 Slug 已被使用，請換一個" }, { status: 400 });
     }
 
-    // 图片：小图直接存，大图后续 UPDATE
+    // 图片：小图直接存，大图后续 UPDATE（提高阈值适配 800px/0.75 质量）
     const images = body.images || "[]";
-    const imgField = images.length < 80000 ? `'${s(images)}'` : "'[]'";
+    const imgField = images.length < 200000 ? `'${s(images)}'` : "'[]'";
 
     const ins = [
       "INSERT INTO Product(id,name,slug,description,specs,price,comparePrice,stock,isActive,isFeatured,images,categoryId,brand,tags,createdAt,updatedAt)",
