@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { updateAdminUserPassword, updateAdminUserPermissions, deleteAdminUser } from "@/lib/turso-db";
+import { updateAdminUserPassword, updateAdminUserPermissions, deleteAdminUser } from "@/lib/data";
 import { hashPassword } from "@/lib/password";
 
 export const dynamic = "force-dynamic";

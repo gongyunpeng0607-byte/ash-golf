@@ -68,7 +68,9 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
             </div>
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-8xl">🏌️</div>
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="text-ash-gray-300 text-xs tracking-[0.3em] uppercase">ASH GOLF</span>
+          </div>
         )}
       </div>
 

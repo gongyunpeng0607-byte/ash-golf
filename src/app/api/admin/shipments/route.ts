@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getShipmentOrders, updateShipmentStatus } from "@/lib/turso-db";
+import { getShipmentOrders, updateShipmentStatus } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 

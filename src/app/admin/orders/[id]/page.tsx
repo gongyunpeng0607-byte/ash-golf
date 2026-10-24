@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getOrderById } from "@/lib/turso-db";
+import { getOrderById } from "@/lib/data";
 import { formatTWD, formatDateTime } from "@/lib/format";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
 import { ArrowLeft, MapPin, Phone, User, Package, Truck, Clock, FileText, MessageCircle, Mail } from "lucide-react";
@@ -28,7 +28,7 @@ function removeLineFromNote(note: string): string {
 
 export default async function AdminOrderDetailPage({ params }: Props) {
   const { id } = await params;
-  const order = await getOrderById(id) as any;
+  const order = await getOrderById(id);
   if (!order) notFound();
 
   const note = order.note || "";
@@ -40,7 +40,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
       <Link href="/admin/orders" className="inline-flex items-center gap-2 text-xs text-ash-gray-400 hover:text-ash-black mb-8"><ArrowLeft className="h-3 w-3"/> 返回訂單列表</Link>
       <div className="flex items-center justify-between mb-8">
         <div><h1 className="text-[22px] font-bold tracking-tight">訂單詳情</h1><p className="text-[13px] text-ash-gray-400 mt-0.5 font-mono">{order.orderNo}</p></div>
-        <span className={`px-3 py-1.5 text-[10px] tracking-[0.12em] uppercase font-bold rounded-full ${order.status==="paid"||order.status==="delivered"?"bg-green-50 text-green-700":order.status==="cancelled"?"bg-red-50 text-red-600":"bg-ash-gray-100 text-ash-gray-600"}`}>{ORDER_STATUS_LABELS[order.status as string]||order.status}</span>
+        <span className={`px-3 py-1.5 text-[10px] tracking-[0.12em] uppercase font-bold rounded-full ${order.status==="paid"||order.status==="delivered"?"bg-green-50 text-green-700":order.status==="cancelled"?"bg-red-50 text-red-600":"bg-ash-gray-100 text-ash-gray-600"}`}>{ORDER_STATUS_LABELS[order.status]||order.status}</span>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
@@ -58,8 +58,8 @@ export default async function AdminOrderDetailPage({ params }: Props) {
           <h2 className="text-xs tracking-[0.12em] uppercase font-bold text-ash-gray-400 mb-5 flex items-center gap-2"><Package className="h-3.5 w-3.5"/> 訂單資訊</h2>
           <div className="space-y-4">
             <div className="flex items-center gap-3"><Truck className="h-4 w-4 text-ash-gray-300 shrink-0"/><span className="text-[11px] text-ash-gray-400 w-12 shrink-0">付款</span><span className="text-[13px] font-medium">貨到付款</span></div>
-            <div className="flex items-center gap-3"><Truck className="h-4 w-4 text-ash-gray-300 shrink-0"/><span className="text-[11px] text-ash-gray-400 w-12 shrink-0">配送</span><span className="text-[13px] font-medium">{(order.shippingMethod as string)==="home"?"宅配到府":order.shippingMethod}</span></div>
-            <div className="flex items-center gap-3"><Clock className="h-4 w-4 text-ash-gray-300 shrink-0"/><span className="text-[11px] text-ash-gray-400 w-12 shrink-0">日期</span><span className="text-[13px] font-medium font-mono">{formatDateTime(order.createdAt as string)}</span></div>
+            <div className="flex items-center gap-3"><Truck className="h-4 w-4 text-ash-gray-300 shrink-0"/><span className="text-[11px] text-ash-gray-400 w-12 shrink-0">配送</span><span className="text-[13px] font-medium">{order.shippingMethod==="home"?"宅配到府":order.shippingMethod}</span></div>
+            <div className="flex items-center gap-3"><Clock className="h-4 w-4 text-ash-gray-300 shrink-0"/><span className="text-[11px] text-ash-gray-400 w-12 shrink-0">日期</span><span className="text-[13px] font-medium font-mono">{formatDateTime(order.createdAt)}</span></div>
           </div>
 
           {lineId && (
@@ -80,12 +80,12 @@ export default async function AdminOrderDetailPage({ params }: Props) {
       </div>
 
       <div className="mt-6 bg-white border border-ash-gray-50 rounded-xl p-6">
-        <h2 className="text-xs tracking-[0.12em] uppercase font-bold text-ash-gray-400 mb-5">商品明細 ({(order.items as any[])?.length||0})</h2>
-        <div className="space-y-3">{(order.items as any[])?.map((item:any) => (
+        <h2 className="text-xs tracking-[0.12em] uppercase font-bold text-ash-gray-400 mb-5">商品明細 ({order.items.length})</h2>
+        <div className="space-y-3">{order.items.map((item) => (
           <div key={item.id} className="flex gap-4 p-4 bg-ash-gray-50 rounded-lg">
             <div className="w-14 h-16 bg-ash-gray-200 rounded-lg flex items-center justify-center text-xl shrink-0">🏌️</div>
             <div className="flex-1">
-              <Link href={`/products/${item.product?.slug||item.productSlug||""}`} className="text-[13px] font-medium hover:text-ash-gray-600">{item.product?.name||item.productName||"—"}</Link>
+              <Link href={`/products/${item.product?.slug || ""}`} className="text-[13px] font-medium hover:text-ash-gray-600">{item.product?.name || "—"}</Link>
               <div className="flex items-center gap-4 mt-1 text-[12px] text-ash-gray-500"><span>×{item.quantity}</span><span>{formatTWD(Number(item.price))} /件</span></div>
             </div>
             <span className="text-[13px] font-bold shrink-0">{formatTWD(Number(item.price)*Number(item.quantity))}</span>

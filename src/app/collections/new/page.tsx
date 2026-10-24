@@ -1,10 +1,11 @@
 export const revalidate = 300;
 import { Suspense } from "react";
 import Link from "next/link";
-import { getProducts } from "@/lib/turso-db";
+import { getProductCards } from "@/lib/data";
 import { ProductCard } from "@/components/products/ProductCard";
 import { SortSelect } from "@/components/products/SortSelect";
 import type { Metadata } from "next";
+import type { Prisma } from "@/generated/prisma/client";
 
 export const metadata: Metadata = { title: "NEW ARRIVALS | ASH GOLF" };
 
@@ -14,8 +15,9 @@ export default async function NewArrivalsPage({ searchParams }: Props) {
   const params = await searchParams;
   const page = parseInt(params.page || "1");
   const sort = params.sort || "newest";
-  const orderBy = sort === "price-asc" ? "price ASC" : sort === "price-desc" ? "price DESC" : "createdAt DESC";
-  const { products, total } = await getProducts({ where: "isActive = 1", orderBy, skip: (page - 1) * 24, take: 24 });
+  const orderBy: Prisma.ProductOrderByWithRelationInput =
+    sort === "price-asc" ? { price: "asc" } : sort === "price-desc" ? { price: "desc" } : { createdAt: "desc" };
+  const { products, total } = await getProductCards({ where: { isActive: true }, orderBy, skip: (page - 1) * 24, take: 24 });
   const totalPages = Math.ceil(total / 24);
 
   return (
@@ -35,12 +37,12 @@ export default async function NewArrivalsPage({ searchParams }: Props) {
             <div className="text-center py-32"><p className="text-6xl mb-4 opacity-20">📭</p><p className="text-sm text-ash-gray-500">暫無新品</p></div>
           ) : (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-10">{products.map((p: any) => <ProductCard key={p.id} product={p} />)}</div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-10">{products.map((p) => <ProductCard key={p.id} product={p} />)}</div>
               {totalPages > 1 && (
                 <div className="flex justify-center gap-2 mt-16">
-                  {Array.from({length:totalPages},(_,i)=>i+1).map(p => {
-                    const qs = new URLSearchParams({sort,...(p>1&&{page:String(p)})}).toString();
-                    return <a key={p} href={`/collections/new?${qs}`} className={`w-9 h-9 flex items-center justify-center text-xs ${page===p?"bg-ash-black text-white":"border border-ash-gray-200 hover:border-ash-black"}`}>{p}</a>;
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => {
+                    const qs = new URLSearchParams({ sort, ...(p > 1 && { page: String(p) }) }).toString();
+                    return <a key={p} href={`/collections/new?${qs}`} className={`w-9 h-9 flex items-center justify-center text-xs ${page === p ? "bg-ash-black text-white" : "border border-ash-gray-200 hover:border-ash-black"}`}>{p}</a>;
                   })}
                 </div>
               )}

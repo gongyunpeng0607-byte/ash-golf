@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { getProducts } from "@/lib/turso-db";
+import { getProductCards } from "@/lib/data";
 import { ProductCard } from "@/components/products/ProductCard";
 import { ArrowRight } from "lucide-react";
 
 export async function FeaturedProducts() {
   try {
-    const { products } = await getProducts({
-      where: "isActive = 1 AND isFeatured = 1",
-      orderBy: "createdAt DESC",
+    const { products } = await getProductCards({
+      where: { isActive: true, isFeatured: true },
+      orderBy: { createdAt: "desc" },
       take: 8,
     });
 
@@ -25,7 +25,7 @@ export async function FeaturedProducts() {
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10">
-          {products.map((product: any) => (
+          {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

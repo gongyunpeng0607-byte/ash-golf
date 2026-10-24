@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { MessageCircle, Facebook } from "lucide-react";
 
 export function HeroBanner() {
   return (
@@ -61,6 +62,35 @@ export function HeroBanner() {
                 </Button>
               </Link>
             </motion.div>
+
+            {/* Social */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.0, duration: 0.6 }}
+              className="mt-10 flex items-center gap-3"
+            >
+              <a
+                href="https://line.me/ti/p/TGZtBAxgwy"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="LINE 官方帳號"
+                className="group inline-flex items-center gap-2 border border-white/20 px-5 py-3 text-[11px] tracking-[0.2em] uppercase font-bold text-white/80 hover:text-white hover:border-[#06C755] transition-colors"
+              >
+                <MessageCircle className="h-4 w-4 group-hover:text-[#06C755] transition-colors" />
+                LINE
+              </a>
+              <a
+                href="https://www.facebook.com/profile.php?id=61594303280734"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook 粉絲專頁"
+                className="group inline-flex items-center gap-2 border border-white/20 px-5 py-3 text-[11px] tracking-[0.2em] uppercase font-bold text-white/80 hover:text-white hover:border-[#1877F2] transition-colors"
+              >
+                <Facebook className="h-4 w-4 group-hover:text-[#1877F2] transition-colors" />
+                FACEBOOK
+              </a>
+            </motion.div>
           </motion.div>
 
           {/* Right: Full-bleed image area */}
@@ -78,10 +108,12 @@ export function HeroBanner() {
             <motion.div
               animate={{ y: [0, -15, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="relative z-10 text-center"
+              className="relative z-10 flex flex-col items-center"
             >
-              <span className="text-[160px] lg:text-[200px] opacity-90 select-none">⛳</span>
-              <p className="text-white/30 text-xs tracking-[0.3em] uppercase mt-4">ASH GOLF</p>
+              <div className="w-56 h-56 lg:w-72 lg:h-72 rounded-full border border-white/15 flex items-center justify-center">
+                <span className="text-7xl lg:text-8xl font-light tracking-[0.1em] text-white/80 select-none">A</span>
+              </div>
+              <p className="text-white/30 text-xs tracking-[0.3em] uppercase mt-6">ASH GOLF</p>
             </motion.div>
           </motion.div>
         </div>

@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getProductById, getCategories } from "@/lib/turso-db";
+import { getProductById, getCategories } from "@/lib/data";
 import { ProductForm } from "@/components/admin/ProductForm";
 
 interface Props { params: Promise<{ id: string }>; }

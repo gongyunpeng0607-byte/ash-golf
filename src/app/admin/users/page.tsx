@@ -1,4 +1,4 @@
-import { listAdminUsers } from "@/lib/turso-db";
+import { listAdminUsers } from "@/lib/data";
 import { AdminUsersTable } from "./AdminUsersTable";
 
 export const dynamic = "force-dynamic";

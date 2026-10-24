@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 import Link from "next/link";
-import { getProducts, getOrders } from "@/lib/turso-db";
+import { getProducts, getOrders } from "@/lib/data";
 import { formatTWD } from "@/lib/format";
 import { auth } from "@/auth";
 import { Box, ShoppingBag, TrendingUp, Plus, ArrowRight } from "lucide-react";
@@ -12,7 +12,7 @@ export default async function AdminDashboard() {
 
   // 独立查询，一个失败不影响另一个
   const [productsResult, ordersResult] = await Promise.allSettled([
-    getProducts({ where: "isActive = 1", take: 0 }),
+    getProducts({ where: { isActive: true }, take: 0 }),
     getOrders(),
   ]);
 
@@ -20,7 +20,7 @@ export default async function AdminDashboard() {
   const orderData = ordersResult.status === "fulfilled" ? ordersResult.value : { orders: [], total: 0 };
   const { orders, total: orderCount } = orderData;
 
-  const totalRevenue = orders.reduce((sum: number, o: any) => o.status !== "cancelled" ? sum + Number(o.totalAmount) : sum, 0);
+  const totalRevenue = orders.reduce((sum: number, o) => o.status !== "cancelled" ? sum + Number(o.totalAmount) : sum, 0);
   const recentOrders = orders.slice(0, 5);
 
   const stats = [
@@ -54,12 +54,12 @@ export default async function AdminDashboard() {
           <table className="w-full min-w-[600px]">
             <thead><tr className="border-b border-ash-gray-50"><th className="text-left px-6 py-3 text-[10px] tracking-[0.12em] uppercase text-ash-gray-400 font-medium">訂單編號</th><th className="text-left px-6 py-3 text-[10px] tracking-[0.12em] uppercase text-ash-gray-400 font-medium">客戶</th><th className="text-left px-6 py-3 text-[10px] tracking-[0.12em] uppercase text-ash-gray-400 font-medium">金額</th><th className="text-left px-6 py-3 text-[10px] tracking-[0.12em] uppercase text-ash-gray-400 font-medium">狀態</th><th className="text-right px-6 py-3 text-[10px] tracking-[0.12em] uppercase text-ash-gray-400 font-medium">日期</th></tr></thead>
             <tbody>
-              {recentOrders.map((o: any) => (
+              {recentOrders.map((o) => (
                 <tr key={o.id} className="border-b border-ash-gray-50 hover:bg-ash-gray-50/50 transition-colors">
                   <td className="px-6 py-4 text-[13px] font-mono font-medium">{o.orderNo}</td><td className="px-6 py-4 text-[13px]">{o.recipientName}</td>
                   <td className="px-6 py-4 text-[13px] font-bold">{formatTWD(Number(o.totalAmount))}</td>
                   <td className="px-6 py-4"><span className={`px-2.5 py-0.5 text-[10px] tracking-wider uppercase font-medium rounded-full ${o.status==="paid"||o.status==="delivered"?"bg-green-50 text-green-700":o.status==="cancelled"?"bg-red-50 text-red-600":"bg-ash-gray-100 text-ash-gray-600"}`}>{o.status}</span></td>
-                  <td className="px-6 py-4 text-[12px] text-ash-gray-400 text-right">{new Date(o.createdAt as string).toLocaleDateString("zh-TW")}</td>
+                  <td className="px-6 py-4 text-[12px] text-ash-gray-400 text-right">{new Date(o.createdAt).toLocaleDateString("zh-TW")}</td>
                 </tr>
               ))}
               {recentOrders.length===0 && <tr><td colSpan={5} className="px-6 py-16 text-center text-[13px] text-ash-gray-300">尚無訂單</td></tr>}

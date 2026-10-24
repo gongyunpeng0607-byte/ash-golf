@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 import Link from "next/link";
-import { getCategories } from "@/lib/turso-db";
+import { getCategories } from "@/lib/data";
 import { ProductForm } from "@/components/admin/ProductForm";
 
 export default async function NewProductPage() {

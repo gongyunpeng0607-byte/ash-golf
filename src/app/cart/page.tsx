@@ -53,8 +53,8 @@ export default function CartPage() {
                     exit={{ opacity: 0, height: 0 }}
                     className="flex gap-6 py-6 border-b border-ash-gray-100"
                   >
-                    <div className="w-24 h-32 bg-ash-gray-50 flex items-center justify-center text-3xl shrink-0">
-                      🏌️
+                    <div className="w-24 h-32 bg-ash-gray-50 flex items-center justify-center shrink-0 overflow-hidden">
+                      {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" /> : <span className="text-[9px] tracking-[0.2em] uppercase text-ash-gray-300">ASH</span>}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-[13px] font-medium leading-snug">{item.name}</h3>

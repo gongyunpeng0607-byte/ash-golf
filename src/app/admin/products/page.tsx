@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { getProducts, getCategories } from "@/lib/turso-db";
+import { getProducts, getCategories } from "@/lib/data";
 import { formatTWD } from "@/lib/format";
-import { Plus, Pencil, Eye, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { RefreshButton } from "./RefreshButton";
 import { JumpToPage } from "./JumpToPage";
@@ -34,17 +34,15 @@ export default async function AdminProductsPage({
 
   const [{ products, total }, categories] = await Promise.all([
     getProducts({
-      where: "1=1",
-      orderBy: "createdAt DESC",
+      orderBy: { createdAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
-      ttl: 0,
     }),
     getCategories(),
   ]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
-  const catMap = new Map(categories.map((c: any) => [c.id, c.name]));
+  const catMap = new Map(categories.map((c) => [c.id, c.name]));
 
   return (
     <div>
@@ -93,7 +91,7 @@ export default async function AdminProductsPage({
               </tr>
             </thead>
             <tbody>
-              {products.map((p: any) => {
+              {products.map((p) => {
                 const img = firstImage(p.images || "[]");
                 return (
                 <tr
@@ -134,12 +132,12 @@ export default async function AdminProductsPage({
                   <td className="px-5 py-3">
                     <span
                       className={`px-2 py-0.5 text-[10px] font-medium rounded-full ${
-                        Number(p.isActive)
+                        p.isActive
                           ? "bg-green-50 text-green-700"
                           : "bg-ash-gray-100 text-ash-gray-500"
                       }`}
                     >
-                      {Number(p.isActive) ? "上架中" : "下架"}
+                      {p.isActive ? "上架中" : "下架"}
                     </span>
                   </td>
                   <td className="px-5 py-3 text-right">

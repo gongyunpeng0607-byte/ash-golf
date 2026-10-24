@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { X, User, Heart } from "lucide-react";
+import { X } from "lucide-react";
 import { CATEGORIES } from "@/lib/constants";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -63,21 +63,6 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
                 onClick={onClose}
               >
                 品牌總覽
-              </Link>
-              <hr className="my-4 border-white/10" />
-              <Link
-                href="/account"
-                className="flex items-center gap-3 px-3 py-3 text-sm text-white/60 hover:text-white"
-                onClick={onClose}
-              >
-                <User className="h-4 w-4" /> 會員中心
-              </Link>
-              <Link
-                href="/wishlist"
-                className="flex items-center gap-3 px-3 py-3 text-sm text-white/60 hover:text-white"
-                onClick={onClose}
-              >
-                <Heart className="h-4 w-4" /> 願望清單
               </Link>
             </nav>
           </motion.div>

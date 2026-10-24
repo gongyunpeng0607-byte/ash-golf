@@ -1,24 +1,21 @@
 export const revalidate = 300;
-import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getCategoryBySlug } from "@/lib/turso-db";
+import { getCategoryBySlug } from "@/lib/data";
 import { ProductCard } from "@/components/products/ProductCard";
 import type { Metadata } from "next";
-
-// @ts-nocheck
 
 interface Props { params: Promise<{ slug: string }>; }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const category = await getCategoryBySlug(slug) as any;
+  const category = await getCategoryBySlug(slug);
   if (!category) return { title: "分類不存在" };
-  return { title: `${category.name} | ASH GOLF`, description: category.description as string };
+  return { title: `${category.name} | ASH GOLF`, description: category.description ?? undefined };
 }
 
 export default async function CategoryPage({ params }: Props) {
   const { slug } = await params;
-  const category = await getCategoryBySlug(slug) as any;
+  const category = await getCategoryBySlug(slug);
 
   if (!category) {
     return (
@@ -40,9 +37,9 @@ export default async function CategoryPage({ params }: Props) {
       </nav>
       <h1 className="text-2xl lg:text-3xl font-bold mb-2 tracking-tight">{category.name}</h1>
       {category.description && <p className="text-sm text-ash-gray-500 mb-10">{category.description}</p>}
-      {category.products?.length > 0 ? (
+      {category.products.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10">
-          {category.products.map((p: any) => <ProductCard key={p.id} product={p} />)}
+          {category.products.map((p) => <ProductCard key={p.id} product={p} />)}
         </div>
       ) : (
         <div className="text-center py-20 text-ash-gray-400">暫無商品</div>

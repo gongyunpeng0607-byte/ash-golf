@@ -8,18 +8,18 @@ export const metadata: Metadata = {
 };
 
 const BRANDS = [
-  { name: "TAYLORMADE", logo: "🏌️", desc: "專業高爾夫球具領導品牌" },
-  { name: "TITLEIST", logo: "⛳", desc: "巡迴賽最受信賴的高爾夫品牌" },
-  { name: "CALLAWAY", logo: "🏌️‍♂️", desc: "創新科技驅動的球具品牌" },
-  { name: "PING", logo: "🏌️", desc: "經典工藝與設計的品牌" },
-  { name: "SCOTTY CAMERON", logo: "🎯", desc: "世界最精緻的推桿品牌" },
-  { name: "FOOTJOY", logo: "🧤", desc: "高爾夫手套與鞋類第一品牌" },
-  { name: "NIKE GOLF", logo: "👕", desc: "運動時尚高爾夫服飾" },
-  { name: "BUSHNELL", logo: "🔭", desc: "專業高爾夫測距儀品牌" },
-  { name: "BOSS GOLF", logo: "👔", desc: "德國時尚高爾夫服飾" },
-  { name: "G/FORE", logo: "🧤", desc: "時尚潮流高爾夫品牌" },
-  { name: "SUN DAY RED", logo: "🐅", desc: "Tiger Woods 高爾夫服飾" },
-  { name: "DESCENTE", logo: "🇯🇵", desc: "日本高性能高爾夫服飾" },
+  { name: "TAYLORMADE", desc: "專業高爾夫球具領導品牌" },
+  { name: "TITLEIST", desc: "巡迴賽最受信賴的高爾夫品牌" },
+  { name: "CALLAWAY", desc: "創新科技驅動的球具品牌" },
+  { name: "PING", desc: "經典工藝與設計的品牌" },
+  { name: "SCOTTY CAMERON", desc: "世界最精緻的推桿品牌" },
+  { name: "FOOTJOY", desc: "高爾夫手套與鞋類第一品牌" },
+  { name: "NIKE GOLF", desc: "運動時尚高爾夫服飾" },
+  { name: "BUSHNELL", desc: "專業高爾夫測距儀品牌" },
+  { name: "BOSS GOLF", desc: "德國時尚高爾夫服飾" },
+  { name: "G/FORE", desc: "時尚潮流高爾夫品牌" },
+  { name: "SUN DAY RED", desc: "Tiger Woods 高爾夫服飾" },
+  { name: "DESCENTE", desc: "日本高性能高爾夫服飾" },
 ];
 
 export default function BrandsPage() {
@@ -38,7 +38,9 @@ export default function BrandsPage() {
             href={`/products?search=${encodeURIComponent(brand.name)}`}
             className="group block border border-ash-gray-100 p-8 text-center hover:border-ash-black transition-all duration-300 hover:shadow-sm"
           >
-            <span className="text-5xl block mb-4 group-hover:scale-110 transition-transform duration-300">{brand.logo}</span>
+            <span className="inline-flex items-center justify-center w-16 h-16 rounded-full border border-ash-gray-200 text-2xl font-light tracking-wider text-ash-gray-800 mb-4 group-hover:border-ash-black group-hover:text-ash-black transition-colors duration-300">
+              {brand.name.charAt(0)}
+            </span>
             <h3 className="text-sm font-bold tracking-wider">{brand.name}</h3>
             <p className="text-[11px] text-ash-gray-400 mt-2">{brand.desc}</p>
           </Link>

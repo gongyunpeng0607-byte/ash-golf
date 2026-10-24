@@ -1,10 +1,11 @@
 export const revalidate = 300;
 import { Suspense } from "react";
 import Link from "next/link";
-import { getProducts, getCategories } from "@/lib/turso-db";
+import { getProductCards, getCategories } from "@/lib/data";
 import { ProductCard } from "@/components/products/ProductCard";
 import { SortSelect } from "@/components/products/SortSelect";
 import type { Metadata } from "next";
+import type { Prisma } from "@/generated/prisma/client";
 
 export const metadata: Metadata = { title: "全部商品 | ASH GOLF" };
 
@@ -18,13 +19,20 @@ export default async function ProductsPage({ searchParams }: Props) {
   const categoryFilter = params.category || "";
   const pageSize = 24;
 
-  let where = "isActive = 1";
-  if (search) where += ` AND (name LIKE '%${search.replace(/'/g, "''")}%' OR description LIKE '%${search.replace(/'/g, "''")}%' OR brand LIKE '%${search.replace(/'/g, "''")}%')`;
-  if (categoryFilter) where += ` AND categoryId = '${categoryFilter}'`;
-  const orderBy = sort === "price-asc" ? "price ASC" : sort === "price-desc" ? "price DESC" : "createdAt DESC";
+  const where: Prisma.ProductWhereInput = { isActive: true };
+  if (search) {
+    where.OR = [
+      { name: { contains: search } },
+      { description: { contains: search } },
+      { brand: { contains: search } },
+    ];
+  }
+  if (categoryFilter) where.categoryId = categoryFilter;
+  const orderBy: Prisma.ProductOrderByWithRelationInput =
+    sort === "price-asc" ? { price: "asc" } : sort === "price-desc" ? { price: "desc" } : { createdAt: "desc" };
 
   const [{ products, total }, categories] = await Promise.all([
-    getProducts({ where, orderBy, skip: (page - 1) * pageSize, take: pageSize }),
+    getProductCards({ where, orderBy, skip: (page - 1) * pageSize, take: pageSize }),
     getCategories(),
   ]);
 
@@ -47,8 +55,8 @@ export default async function ProductsPage({ searchParams }: Props) {
             <h3 className="text-[10px] tracking-[0.2em] uppercase text-ash-gray-500 mb-4">分類</h3>
             <ul className="space-y-2">
               <li><a href="/products" className={`block text-[13px] py-1 ${!categoryFilter ? "text-ash-black font-medium" : "text-ash-gray-500 hover:text-ash-black"}`}>全部分類</a></li>
-              {categories.map((cat: Record<string,unknown>) => (
-                <li key={cat.id as string}><a href={`/products?category=${cat.id}`} className={`block text-[13px] py-1 ${categoryFilter === cat.id ? "text-ash-black font-medium" : "text-ash-gray-500 hover:text-ash-black"}`}>{cat.name as string}</a></li>
+              {categories.map((cat) => (
+                <li key={cat.id}><a href={`/products?category=${cat.id}`} className={`block text-[13px] py-1 ${categoryFilter === cat.id ? "text-ash-black font-medium" : "text-ash-gray-500 hover:text-ash-black"}`}>{cat.name}</a></li>
               ))}
             </ul>
           </div>
@@ -64,7 +72,7 @@ export default async function ProductsPage({ searchParams }: Props) {
           ) : (
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-10">
-                {products.map((p: Record<string,unknown>) => <ProductCard key={p.id as string} product={p as any} />)}
+                {products.map((p) => <ProductCard key={p.id} product={p} />)}
               </div>
               {totalPages > 1 && (
                 <div className="flex justify-center gap-2 mt-16">

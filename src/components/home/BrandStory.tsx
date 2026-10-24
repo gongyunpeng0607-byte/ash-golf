@@ -17,9 +17,11 @@ export function BrandStory() {
           >
             <div className="absolute top-8 right-8 w-32 h-32 rounded-full border border-white/10" />
             <div className="absolute bottom-12 left-12 w-24 h-24 rounded-full border border-white/10" />
-            <div className="text-center relative z-10">
-              <span className="text-[120px] opacity-50">⛳</span>
-              <p className="text-xs tracking-[0.3em] uppercase text-white/30 mt-2">ASH GOLF</p>
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="w-36 h-36 rounded-full border border-white/10 flex items-center justify-center">
+                <span className="text-5xl font-light text-white/60 select-none">A</span>
+              </div>
+              <p className="text-xs tracking-[0.3em] uppercase text-white/30 mt-4">ASH GOLF</p>
             </div>
           </motion.div>
 

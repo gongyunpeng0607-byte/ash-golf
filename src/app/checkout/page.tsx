@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCartStore } from "@/stores/cartStore";
 import { formatTWD } from "@/lib/format";
+import { ShoppingCart } from "lucide-react";
 import { AddressSelect } from "@/components/checkout/AddressSelect";
 import { LINEQRModal } from "@/components/checkout/LINEQRModal";
 
@@ -30,7 +31,7 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <div className="max-w-lg mx-auto px-6 py-32 text-center">
-        <p className="text-6xl mb-4 opacity-20">🛒</p>
+        <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-ash-gray-200" />
         <p className="text-sm text-ash-gray-500 mb-8">購物車是空的</p>
         <Link href="/products" className="inline-block bg-ash-black text-white text-xs tracking-[0.2em] uppercase px-10 py-4 font-bold hover:bg-ash-gray-800">去逛逛</Link>
       </div>
@@ -95,7 +96,7 @@ export default function CheckoutPage() {
       <Link href="/cart" className="text-xs text-ash-gray-400 hover:text-ash-black mb-8 inline-block">← 返回購物車</Link>
       <h1 className="text-xl font-bold mb-8">填寫收件資訊</h1>
 
-      <div className="mb-8 p-4 bg-ash-gray-50 space-y-2 rounded-lg">
+      <div className="mb-8 p-4 bg-ash-gray-50 space-y-2">
         {items.map(item => (
           <div key={item.productId} className="flex justify-between text-sm">
             <span className="text-ash-gray-600 truncate">{item.name} ×{item.quantity}</span>
@@ -160,7 +161,7 @@ export default function CheckoutPage() {
           <textarea className={FIELD + " border-ash-gray-200 focus:border-ash-black resize-none"} value={note} onChange={e => setNote(e.target.value)} rows={2} placeholder="有其他需求請填寫..." />
         </div>
 
-        <button type="submit" disabled={submitting} className="w-full bg-ash-black text-white text-sm tracking-[0.15em] uppercase py-4 font-bold hover:bg-ash-gray-800 disabled:opacity-50 transition-colors rounded-lg">
+        <button type="submit" disabled={submitting} className="w-full bg-ash-black text-white text-sm tracking-[0.15em] uppercase py-4 font-bold hover:bg-ash-gray-800 disabled:opacity-50 transition-colors">
           {submitting ? "處理中..." : "確認下單"}
         </button>
         <p className="text-[11px] text-ash-gray-400 text-center">下單後請掃 LINE QR Code 聯繫客服確認訂單</p>
