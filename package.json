@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "高爾夫球具裝備商城 — 台灣市場獨立站",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
